@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RH Manager - Sistema de Gestão e CRUD de Entidades JPA</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        /* Fallback de CSS com a paleta do Color Hunt */
+        :root {
+            --color-dark: #092328;
+            --color-primary: #12544F;
+            --color-success: #2A835F;
+            --color-accent: #8BBB92;
+        }
+        .palette-bar {
+            display: flex;
+            height: 6px;
+            width: 100%;
+        }
+        .palette-1 { background-color: #092328; flex: 1; }
+        .palette-2 { background-color: #12544F; flex: 1; }
+        .palette-3 { background-color: #2A835F; flex: 1; }
+        .palette-4 { background-color: #8BBB92; flex: 1; }
+
+        /* Garantia visual sem marcadores de lista e sem quebra de linha */
+        .nav-tabs {
+            display: flex !important;
+            flex-wrap: nowrap !important;
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            list-style: none !important;
+            list-style-type: none !important;
+            padding: 0 !important;
+            margin: 0 0 1.25rem 0 !important;
+            border-bottom: 2px solid var(--color-border, #d2e0d7);
+            gap: 4px;
+            scrollbar-width: thin;
+        }
+
+        .nav-tabs::-webkit-scrollbar {
+            height: 5px;
+        }
+        .nav-tabs::-webkit-scrollbar-thumb {
+            background: var(--color-accent, #8BBB92);
+            border-radius: 4px;
+        }
+
+        .nav-tabs .nav-link {
+            flex-shrink: 0 !important;
+            white-space: nowrap !important;
+            list-style: none !important;
+            margin: 0 !important;
+        }
+
+        /* Cores distintas para os Status do Colaborador */
+        .badge-status-ativo {
+            background-color: #d1fae5 !important;
+            color: #15803d !important;
+            border: 1px solid #86efac !important;
+        }
+        .badge-status-afastado {
+            background-color: #fef3c7 !important;
+            color: #b45309 !important;
+            border: 1px solid #fde68a !important;
+        }
+        .badge-status-ferias {
+            background-color: #e0f2fe !important;
+            color: #0369a1 !important;
+            border: 1px solid #7dd3fc !important;
+        }
+        .badge-status-desligado {
+            background-color: #fee2e2 !important;
+            color: #b91c1c !important;
+            border: 1px solid #fca5a5 !important;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Barra de Paleta Color Hunt visual no topo -->
+    <div class="palette-bar">
+        <div class="palette-1" title="#092328"></div>
+        <div class="palette-2" title="#12544F"></div>
+        <div class="palette-3" title="#2A835F"></div>
+        <div class="palette-4" title="#8BBB92"></div>
+    </div>
+
+    <!-- Navbar Estilo Bootstrap com cores do Color Hunt -->
+    <nav class="navbar">
+        <a class="navbar-brand" href="/">
+            <div>
+                <strong>RH Manager</strong> &bull; Sistema de Gestão
+                <small>Projeto P2 &bull; Mapeamento Astah JPA + CRUD</small>
+            </div>
+        </a>
+        <div class="navbar-nav">
+            <a href="/h2-console" target="_blank" class="btn btn-accent btn-sm">&#9881; H2 Console</a>
+            <a href="/api/colaboradores" target="_blank" class="btn btn-outline-primary btn-sm" style="color: white; border-color: var(--color-accent);">&#123; JSON &#125; API REST</a>
+        </div>
+    </nav>
+
+    <div class="container">
+
+        <!-- Abas de Navegação (Bootstrap 5 nav-tabs com botões diretos sem li/bolinhas) -->
+        <div class="nav-tabs" id="tabs" role="tablist">
+            <button class="nav-link active" onclick="switchTab('departamentos')">Departamentos</button>
+            <button class="nav-link" onclick="switchTab('cargos')">Cargos</button>
+            <button class="nav-link" onclick="switchTab('unidades')">Unidades</button>
+            <button class="nav-link" onclick="switchTab('colaboradores')">Colaboradores</button>
+            <button class="nav-link" onclick="switchTab('beneficios')">Benefícios</button>
+            <button class="nav-link" onclick="switchTab('folhas')">Folha de Pagamento</button>
+            <button class="nav-link" onclick="switchTab('perfis')">Perfis</button>
+            <button class="nav-link" onclick="switchTab('usuarios')">Usuários</button>
+            <button class="nav-link" onclick="switchTab('colaborador_beneficio')">Colaborador x Benefício</button>
+            <button class="nav-link" onclick="switchTab('usuario_perfil')">Usuário x Perfil</button>
+        </div>
+
+        <!-- Card Principal (Bootstrap Card) -->
+        <div class="card">
+            <div class="card-header">
+                <h3 id="panel-title">Departamentos</h3>
+                <button class="btn btn-success" id="btn-novo" onclick="abrirModalCriar()">+ Novo Registro</button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive" id="table-container">
+                    <!-- Tabela renderizada dinamicamente -->
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Modal Dinâmico Adaptado do Bootstrap -->
+    <div class="modal" id="modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 id="modal-title">Novo Registro</h5>
+                    <button type="button" class="btn-close" onclick="fecharModal()">&times;</button>
+                </div>
+                <form id="modal-form" onsubmit="salvarFormulario(event)">
+                    <div class="modal-body" id="modal-body">
+                        <!-- Campos gerados dinamicamente -->
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="fecharModal()">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" id="modal-submit">Salvar Registro</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentTab = 'departamentos';
+        let auxData = {};
+
+        const configs = {
+            departamentos: {
+                title: 'Departamentos',
+                url: '/api/departamentos',
+                idField: 'id_departamento',
+                columns: [
+                    { key: 'id_departamento', label: 'ID' },
+                    { key: 'nome_departamento', label: 'Nome do Departamento' }
+                ],
+                fields: [
+                    { name: 'id_departamento', label: 'ID', type: 'hidden' },
+                    { name: 'nome_departamento', label: 'Nome do Departamento', type: 'text', required: true }
+                ]
+            },
+            cargos: {
+                title: 'Cargos',
+                url: '/api/cargos',
+                idField: 'id_cargo',
+                columns: [
+                    { key: 'id_cargo', label: 'ID' },
+                    { key: 'nome_cargo', label: 'Nome do Cargo' },
+                    { key: 'nivel', label: 'Nível' }
+                ],
+                fields: [
+                    { name: 'id_cargo', label: 'ID', type: 'hidden' },
+                    { name: 'nome_cargo', label: 'Nome do Cargo', type: 'text', required: true },
+                    { name: 'nivel', label: 'Nível (ex: Júnior, Pleno, Sênior, Coordenação)', type: 'text' }
+                ]
+            },
+            unidades: {
+                title: 'Unidades',
+                url: '/api/unidades',
+                idField: 'id_unidade',
+                columns: [
+                    { key: 'id_unidade', label: 'ID' },
+                    { key: 'nome_unidade', label: 'Nome da Unidade' },
+                    { key: 'cidade', label: 'Cidade' },
+                    { key: 'estado', label: 'UF' },
+                    { key: 'tipo_unidade', label: 'Tipo' },
+                    { key: 'data_abertura', label: 'Data Abertura' }
+                ],
+                fields: [
+                    { name: 'id_unidade', label: 'ID', type: 'hidden' },
+                    { name: 'nome_unidade', label: 'Nome da Unidade', type: 'text', required: true },
+                    { name: 'cidade', label: 'Cidade', type: 'text' },
+                    { name: 'estado', label: 'Estado (UF)', type: 'text' },
+                    { name: 'tipo_unidade', label: 'Tipo de Unidade (ex: Matriz, Filial, Centro Operacional)', type: 'text' },
+                    { name: 'data_abertura', label: 'Data de Abertura', type: 'date' }
+                ]
+            },
+            beneficios: {
+                title: 'Benefícios',
+                url: '/api/beneficios',
+                idField: 'id_beneficio',
+                columns: [
+                    { key: 'id_beneficio', label: 'ID' },
+                    { key: 'nome_beneficio', label: 'Nome do Benefício' },
+                    { key: 'tipo_beneficio', label: 'Tipo do Benefício' }
+                ],
+                fields: [
+                    { name: 'id_beneficio', label: 'ID', type: 'hidden' },
+                    { name: 'nome_beneficio', label: 'Nome do Benefício', type: 'text', required: true },
+                    { name: 'tipo_beneficio', label: 'Tipo (ex: Vale Alimentação, Saúde, Auxílio Home Office)', type: 'text' }
+                ]
+            },
+            perfis: {
+                title: 'Perfis de Acesso',
+                url: '/api/perfis',
+                idField: 'id_perfil',
+                columns: [
+                    { key: 'id_perfil', label: 'ID' },
+                    { key: 'nome_perfil', label: 'Nome do Perfil' }
+                ],
+                fields: [
+                    { name: 'id_perfil', label: 'ID', type: 'hidden' },
+                    { name: 'nome_perfil', label: 'Nome do Perfil (ex: ADMIN, GESTOR, COLABORADOR)', type: 'text', required: true }
+                ]
+            },
+            usuarios: {
+                title: 'Usuários',
+                url: '/api/usuarios',
+                idField: 'id_usuario',
+                columns: [
+                    { key: 'id_usuario', label: 'ID' },
+                    { key: 'login', label: 'Login' }
+                ],
+                fields: [
+                    { name: 'id_usuario', label: 'ID', type: 'hidden' },
+                    { name: 'login', label: 'Login de Acesso', type: 'text', required: true },
+                    { name: 'senha_hash', label: 'Senha / Hash', type: 'password', required: true }
+                ]
+            },
+            colaboradores: {
+                title: 'Colaboradores',
+                url: '/api/colaboradores',
+                idField: 'id_colaborador',
+                columns: [
+                    { key: 'id_colaborador', label: 'ID' },
+                    { key: 'codigo_anonimizado', label: 'Código' },
+                    { key: 'cargo', label: 'Cargo', render: c => c?.cargo?.nome_cargo || '-' },
+                    { key: 'departamento', label: 'Departamento', render: c => c?.departamento?.nome_departamento || '-' },
+                    { key: 'unidade', label: 'Unidade', render: c => c?.unidade?.nome_unidade || '-' },
+                    { key: 'salario_base', label: 'Salário Base', render: c => c.salario_base ? 'R$ ' + Number(c.salario_base).toFixed(2) : '-' },
+                    { key: 'status_colaborador', label: 'Status', render: c => {
+                        const s = (c.status_colaborador || 'Ativo').trim();
+                        const sl = s.toLowerCase();
+                        let badgeClass = 'badge-status-ativo';
+                        if (sl.includes('desligad')) badgeClass = 'badge-status-desligado';
+                        else if (sl.includes('afastad')) badgeClass = 'badge-status-afastado';
+                        else if (sl.includes('feri') || sl.includes('féri')) badgeClass = 'badge-status-ferias';
+                        return `<span class="badge ${badgeClass}">${s}</span>`;
+                    }}
+                ],
+                fields: [
+                    { name: 'id_colaborador', label: 'ID', type: 'hidden' },
+                    { name: 'codigo_anonimizado', label: 'Código Anonimizado (ex: COLAB-00001)', type: 'text', required: true },
+                    { name: 'escolaridade', label: 'Escolaridade', type: 'text' },
+                    { name: 'regime_contratacao', label: 'Regime de Contratação (CLT/PJ/Estágio/Temporário)', type: 'text' },
+                    { name: 'modelo_trabalho', label: 'Modelo de Trabalho (Presencial/Híbrido/Remoto)', type: 'text' },
+                    { name: 'salario_base', label: 'Salário Base (R$)', type: 'number', step: '0.01', required: true },
+                    { name: 'data_nascimento', label: 'Data de Nascimento', type: 'date' },
+                    { name: 'data_admissao', label: 'Data de Admissão', type: 'date' },
+                    { name: 'status_colaborador', label: 'Status do Colaborador', type: 'select-custom', options: ['Ativo', 'Afastado', 'Férias', 'Desligado'], value: 'Ativo', required: true },
+                    { name: 'id_departamento', label: 'Departamento', type: 'select', optionsKey: 'departamentos' },
+                    { name: 'id_cargo', label: 'Cargo', type: 'select', optionsKey: 'cargos' },
+                    { name: 'id_unidade', label: 'Unidade', type: 'select', optionsKey: 'unidades' }
+                ]
+            },
+            folhas: {
+                title: 'Folhas de Pagamento',
+                url: '/api/folhas-pagamento',
+                idField: 'id_folha',
+                columns: [
+                    { key: 'id_folha', label: 'ID' },
+                    { key: 'colaborador', label: 'Colaborador', render: f => f?.colaborador?.codigo_anonimizado || 'ID ' + f.id_colaborador },
+                    { key: 'data_referencia', label: 'Data Referência' },
+                    { key: 'total_vencimentos', label: 'Vencimentos', render: f => 'R$ ' + Number(f.total_vencimentos || 0).toFixed(2) },
+                    { key: 'total_descontos', label: 'Descontos', render: f => 'R$ ' + Number(f.total_descontos || 0).toFixed(2) },
+                    { key: 'salario_liquido', label: 'Salário Líquido', render: f => '<strong>R$ ' + Number(f.salario_liquido || 0).toFixed(2) + '</strong>' }
+                ],
+                fields: [
+                    { name: 'id_folha', label: 'ID', type: 'hidden' },
+                    { name: 'id_colaborador', label: 'Colaborador', type: 'select', optionsKey: 'colaboradores', required: true },
+                    { name: 'data_referencia', label: 'Data de Referência', type: 'date', required: true },
+                    { name: 'total_vencimentos', label: 'Total de Vencimentos (R$)', type: 'number', step: '0.01', required: true },
+                    { name: 'total_descontos', label: 'Total de Descontos (R$)', type: 'number', step: '0.01', required: true },
+                    { name: 'salario_liquido', label: 'Salário Líquido (R$ - opcional, calculado auto)', type: 'number', step: '0.01' }
+                ]
+            },
+            colaborador_beneficio: {
+                title: 'Colaborador x Benefício',
+                url: '/api/colaboradores-beneficios',
+                isComposite: true,
+                idKeys: ['id_colaborador', 'id_beneficio'],
+                columns: [
+                    { key: 'colaborador', label: 'Colaborador', render: cb => cb?.colaborador?.codigo_anonimizado || 'ID ' + cb.id_colaborador },
+                    { key: 'beneficio', label: 'Benefício', render: cb => cb?.beneficio?.nome_beneficio || 'ID ' + cb.id_beneficio }
+                ],
+                fields: [
+                    { name: 'id_colaborador', label: 'Colaborador', type: 'select', optionsKey: 'colaboradores', required: true },
+                    { name: 'id_beneficio', label: 'Benefício', type: 'select', optionsKey: 'beneficios', required: true }
+                ]
+            },
+            usuario_perfil: {
+                title: 'Usuário x Perfil',
+                url: '/api/usuarios-perfis',
+                isComposite: true,
+                idKeys: ['id_usuario', 'id_perfil'],
+                columns: [
+                    { key: 'usuario', label: 'Usuário', render: up => up?.usuario?.login || 'ID ' + up.id_usuario },
+                    { key: 'perfil', label: 'Perfil', render: up => `<span class="badge badge-accent">${up?.perfil?.nome_perfil || 'ID ' + up.id_perfil}</span>` }
+                ],
+                fields: [
+                    { name: 'id_usuario', label: 'Usuário', type: 'select', optionsKey: 'usuarios', required: true },
+                    { name: 'id_perfil', label: 'Perfil', type: 'select', optionsKey: 'perfis', required: true }
+                ]
+            }
+        };
+
+        async function carregarAuxiliares() {
+            try {
+                const [deps, cars, unis, cols, bens, usus, pers] = await Promise.all([
+                    fetch('/api/departamentos').then(r => r.json()).catch(() => []),
+                    fetch('/api/cargos').then(r => r.json()).catch(() => []),
+                    fetch('/api/unidades').then(r => r.json()).catch(() => []),
+                    fetch('/api/colaboradores').then(r => r.json()).catch(() => []),
+                    fetch('/api/beneficios').then(r => r.json()).catch(() => []),
+                    fetch('/api/usuarios').then(r => r.json()).catch(() => []),
+                    fetch('/api/perfis').then(r => r.json()).catch(() => [])
+                ]);
+
+                auxData.departamentos = deps.map(d => ({ value: d.id_departamento, label: d.nome_departamento }));
+                auxData.cargos = cars.map(c => ({ value: c.id_cargo, label: c.nome_cargo + (c.nivel ? ' (' + c.nivel + ')' : '') }));
+                auxData.unidades = unis.map(u => ({ value: u.id_unidade, label: u.nome_unidade }));
+                auxData.colaboradores = cols.map(c => ({ value: c.id_colaborador, label: c.codigo_anonimizado + ' - ID ' + c.id_colaborador }));
+                auxData.beneficios = bens.map(b => ({ value: b.id_beneficio, label: b.nome_beneficio }));
+                auxData.usuarios = usus.map(u => ({ value: u.id_usuario, label: u.login }));
+                auxData.perfis = pers.map(p => ({ value: p.id_perfil, label: p.nome_perfil }));
+            } catch (err) {
+                console.error("Erro ao carregar dados auxiliares", err);
+            }
+        }
+
+        async function switchTab(tabKey) {
+            currentTab = tabKey;
+            document.querySelectorAll('.nav-link').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            const cfg = configs[tabKey];
+            document.getElementById('panel-title').innerText = cfg.title;
+            await carregarAuxiliares();
+            carregarTabela();
+        }
+
+        async function carregarTabela() {
+            const cfg = configs[currentTab];
+            const container = document.getElementById('table-container');
+            container.innerHTML = '<div class="empty-state">Carregando dados da tabela...</div>';
+
+            try {
+                const res = await fetch(cfg.url);
+                if (!res.ok) throw new Error("Status " + res.status);
+                const data = await res.json();
+
+                if (!Array.isArray(data) || data.length === 0) {
+                    container.innerHTML = '<div class="empty-state">Nenhum registro encontrado no banco de dados. Clique em <strong>+ Novo Registro</strong> para adicionar.</div>';
+                    return;
+                }
+
+                let html = '<table class="table table-hover"><thead><tr>';
+                cfg.columns.forEach(col => {
+                    html += `<th>${col.label}</th>`;
+                });
+                html += '<th style="text-align: right;">Ações</th></tr></thead><tbody>';
+
+                data.forEach(item => {
+                    html += '<tr>';
+                    cfg.columns.forEach(col => {
+                        let val = col.render ? col.render(item) : (item[col.key] !== null && item[col.key] !== undefined ? item[col.key] : '-');
+                        html += `<td>${val}</td>`;
+                    });
+
+                    html += '<td style="text-align: right;"><div style="display: flex; gap: 6px; justify-content: flex-end;">';
+                    if (!cfg.isComposite) {
+                        html += `<button class="btn btn-secondary btn-sm" onclick='abrirModalEditar(${JSON.stringify(item)})'>Editar</button>`;
+                        html += `<button class="btn btn-danger btn-sm" onclick='deletarRegistro(${item[cfg.idField]})'>Excluir</button>`;
+                    } else {
+                        html += `<button class="btn btn-danger btn-sm" onclick='deletarComposto(${item[cfg.idKeys[0]]}, ${item[cfg.idKeys[1]]})'>Remover</button>`;
+                    }
+                    html += '</div></td></tr>';
+                });
+
+                html += '</tbody></table>';
+                container.innerHTML = html;
+            } catch (err) {
+                container.innerHTML = `<div class="empty-state" style="color: var(--color-danger)">Erro ao carregar dados: ${err.message}</div>`;
+            }
+        }
+
+        function abrirModalCriar() {
+            const cfg = configs[currentTab];
+            document.getElementById('modal-title').innerText = 'Novo(a) ' + cfg.title;
+            renderFormFields(null);
+            document.getElementById('modal').classList.add('active');
+        }
+
+        function abrirModalEditar(item) {
+            const cfg = configs[currentTab];
+            document.getElementById('modal-title').innerText = 'Editar ' + cfg.title;
+            renderFormFields(item);
+            document.getElementById('modal').classList.add('active');
+        }
+
+        function renderFormFields(item) {
+            const cfg = configs[currentTab];
+            const body = document.getElementById('modal-body');
+            body.innerHTML = '';
+
+            cfg.fields.forEach(f => {
+                let val = '';
+                if (item) {
+                    val = item[f.name] !== undefined ? item[f.name] : '';
+                    if (!val && f.name.startsWith('id_') && item[f.name.replace('id_', '')]) {
+                        val = item[f.name.replace('id_', '')]['id_' + f.name.replace('id_', '')] || '';
+                    }
+                } else if (f.value !== undefined) {
+                    val = f.value;
+                }
+
+                if (f.type === 'hidden') {
+                    body.innerHTML += `<input type="hidden" name="${f.name}" value="${val}">`;
+                } else if (f.type === 'select') {
+                    const opts = auxData[f.optionsKey] || [];
+                    let optHtml = `<div class="mb-3"><label class="form-label">${f.label}</label><select class="form-select" name="${f.name}" ${f.required ? 'required' : ''}>`;
+                    optHtml += '<option value="">-- Selecione uma opção --</option>';
+                    opts.forEach(o => {
+                        const sel = String(o.value) === String(val) ? 'selected' : '';
+                        optHtml += `<option value="${o.value}" ${sel}>${o.label}</option>`;
+                    });
+                    optHtml += '</select></div>';
+                    body.innerHTML += optHtml;
+                } else if (f.type === 'select-custom') {
+                    let optHtml = `<div class="mb-3"><label class="form-label">${f.label}</label><select class="form-select" name="${f.name}" ${f.required ? 'required' : ''}>`;
+                    (f.options || []).forEach(opt => {
+                        const sel = String(opt).toLowerCase() === String(val).toLowerCase() ? 'selected' : '';
+                        optHtml += `<option value="${opt}" ${sel}>${opt}</option>`;
+                    });
+                    optHtml += '</select></div>';
+                    body.innerHTML += optHtml;
+                } else {
+                    body.innerHTML += `
+                        <div class="mb-3">
+                            <label class="form-label">${f.label}</label>
+                            <input class="form-control" type="${f.type}" name="${f.name}" value="${val}" ${f.step ? 'step="' + f.step + '"' : ''} ${f.required ? 'required' : ''}>
+                        </div>
+                    `;
+                }
+            });
+        }
+
+        function fecharModal() {
+            document.getElementById('modal').classList.remove('active');
+        }
+
+        async function salvarFormulario(e) {
+            e.preventDefault();
+            const cfg = configs[currentTab];
+            const form = document.getElementById('modal-form');
+            const formData = new FormData(form);
+            const payload = {};
+
+            formData.forEach((value, key) => {
+                if (value !== '') {
+                    if (key.startsWith('id_') || key === 'salario_base' || key.startsWith('total_') || key === 'salario_liquido') {
+                        payload[key] = isNaN(value) ? value : Number(value);
+                    } else {
+                        payload[key] = value;
+                    }
+                }
+            });
+
+            const id = payload[cfg.idField];
+            const isEdit = !cfg.isComposite && id;
+            const url = isEdit ? `${cfg.url}/${id}` : cfg.url;
+            const method = isEdit ? 'PUT' : 'POST';
+
+            try {
+                const res = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) {
+                    const txt = await res.text();
+                    alert("Erro ao salvar: " + txt);
+                    return;
+                }
+
+                fecharModal();
+                carregarTabela();
+            } catch (err) {
+                alert("Erro na requisição: " + err.message);
+            }
+        }
+
+        async function deletarRegistro(id) {
+            if (!confirm(`Tem certeza que deseja excluir o registro ID ${id}?`)) return;
+            const cfg = configs[currentTab];
+            try {
+                const res = await fetch(`${cfg.url}/${id}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error("Status " + res.status);
+                carregarTabela();
+            } catch (err) {
+                alert("Erro ao excluir: " + err.message);
+            }
+        }
+
+        async function deletarComposto(id1, id2) {
+            if (!confirm(`Deseja remover essa associação (${id1}, ${id2})?`)) return;
+            const cfg = configs[currentTab];
+            try {
+                const res = await fetch(`${cfg.url}/${id1}/${id2}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error("Status " + res.status);
+                carregarTabela();
+            } catch (err) {
+                alert("Erro ao remover: " + err.message);
+            }
+        }
+
+        // Inicializa ao carregar a página
+        document.addEventListener('DOMContentLoaded', async () => {
+            await carregarAuxiliares();
+            carregarTabela();
+        });
+    </script>
+</body>
+</html>
