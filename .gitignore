@@ -36,3 +36,8 @@ build/
 database/*.trace.db
 database/*.lock.db
 
+### Microsoft Office Temporary Files ###
+~$*
+*.tmp
+
+
