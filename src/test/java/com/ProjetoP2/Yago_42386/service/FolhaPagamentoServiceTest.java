@@ -62,3 +62,4 @@ class FolhaPagamentoServiceTest {
 		assertEquals(0.0, folha.getSalario_liquido(), 0.001);
 	}
 }
+
