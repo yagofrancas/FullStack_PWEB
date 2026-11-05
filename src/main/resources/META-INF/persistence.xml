@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="3.0"
+             xmlns="https://jakarta.ee/xml/ns/persistence"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence
+             https://jakarta.ee/xml/ns/persistence/persistence_3_0.xsd">
+
+    <persistence-unit name="RH" transaction-type="RESOURCE_LOCAL">
+        <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
+
+        <!-- Classes de Entidades JPA mapeadas de astah_java -->
+        <class>com.ProjetoP2.Yago_42386.model.beneficio</class>
+        <class>com.ProjetoP2.Yago_42386.model.cargo</class>
+        <class>com.ProjetoP2.Yago_42386.model.colaborador</class>
+        <class>com.ProjetoP2.Yago_42386.model.colaborador_beneficio</class>
+        <class>com.ProjetoP2.Yago_42386.model.departamento</class>
+        <class>com.ProjetoP2.Yago_42386.model.folha_pagamento</class>
+        <class>com.ProjetoP2.Yago_42386.model.perfil</class>
+        <class>com.ProjetoP2.Yago_42386.model.unidade</class>
+        <class>com.ProjetoP2.Yago_42386.model.usuario</class>
+        <class>com.ProjetoP2.Yago_42386.model.usuario_perfil</class>
+
+        <properties>
+            <!-- Conexão H2 Database -->
+            <property name="jakarta.persistence.jdbc.driver" value="org.h2.Driver"/>
+            <property name="jakarta.persistence.jdbc.url" value="jdbc:h2:file:./database/RH;DB_CLOSE_ON_EXIT=FALSE;INIT=CREATE SCHEMA IF NOT EXISTS APP\;SET SCHEMA APP"/>
+            <property name="jakarta.persistence.jdbc.user" value="sa"/>
+            <property name="jakarta.persistence.jdbc.password" value=""/>
+
+            <!-- Dialeto e DDL Hibernate -->
+            <property name="hibernate.dialect" value="org.hibernate.dialect.H2Dialect"/>
+            <property name="hibernate.hbm2ddl.auto" value="update"/>
+            <property name="hibernate.default_schema" value="APP"/>
+            <property name="hibernate.show_sql" value="true"/>
+            <property name="hibernate.format_sql" value="true"/>
+        </properties>
+    </persistence-unit>
+</persistence>
