@@ -66,12 +66,10 @@ public class folha_pagamentoService {
 		}
 	}
 
-	private void calcularSalarioLiquido(folha_pagamento entity) {
-		if (entity.getSalario_liquido() == null || entity.getSalario_liquido() == 0.0) {
-			double venc = entity.getTotal_vencimentos() != null ? entity.getTotal_vencimentos() : 0.0;
-			double desc = entity.getTotal_descontos() != null ? entity.getTotal_descontos() : 0.0;
-			entity.setSalario_liquido(venc - desc);
-		}
+	public void calcularSalarioLiquido(folha_pagamento entity) {
+		double venc = entity.getTotal_vencimentos() != null ? entity.getTotal_vencimentos() : 0.0;
+		double desc = entity.getTotal_descontos() != null ? entity.getTotal_descontos() : 0.0;
+		entity.setSalario_liquido(venc - desc);
 	}
 }
 
