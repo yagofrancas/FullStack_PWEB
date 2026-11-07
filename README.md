@@ -27,11 +27,16 @@ FullStack_PWEB/
 │   ├── Matriz de rastreabilidade — 2ª entrega.docx
 │   └── Relatório Técnico — 2ª entrega.docx
 │
+├── 3Entrega/                       # 3ª Entrega (13/11/2026 - Fases 09 e 10)
+│   ├── Matriz de rastreabilidade — 3ª entrega.docx
+│   └── Relatório Técnico — 3ª entrega.docx
+│
 ├── src/main/java/com/ProjetoP2/Yago_42386/
 │   ├── model/                      # 10 Entidades JPA mapeadas (Fases 05/06)
 │   ├── repository/                 # Repositórios Spring Data JPA (Fase 06)
 │   ├── service/                    # Regras de Negócio e Transição de Status (Fase 07)
-│   └── controller/                 # Endpoints RESTful e Tratamento de Erros (Fase 08)
+│   ├── security/                   # Spring Security, CustomUserDetailsService e BCrypt (Fase 09)
+│   └── controller/                 # Controllers RESTful e Controllers MVC Thymeleaf (Fase 10)
 │
 ├── src/main/resources/
 │   ├── application.properties      # Configuração H2, Schema APP, DDL e Logs
@@ -76,6 +81,36 @@ A estilização visual da aplicação obedece rigorosamente à paleta corporativ
    * O valor de `salario_liquido` é sempre calculado e verificado pelo backend (`total_vencimentos - total_descontos`), evitando discrepâncias contábeis no banco de dados.
 3. **Resolução de Integridade Referencial**:
    * O vínculo de chaves estrangeiras entre Colaborador, Cargo, Unidade e Departamento é tratado na camada de serviço.
+
+---
+
+## 🔐 Autenticação, Autorização e Segurança (Fase 09)
+
+A aplicação conta com autenticação por banco relacional via **Spring Security** com senhas criptografadas em **BCrypt** e controle de acesso baseado em papéis (**RBAC**) protegido no nível de servidor (Item 7 do Edital):
+
+### Tabela de Perfis e Acessos:
+| Perfil | Permissões no Sistema | Acesso à Folha de Pagamento | Operações de Escrita (POST/PUT/DELETE) |
+| :--- | :--- | :---: | :---: |
+| **`RH` / `ADMIN`** | Acesso total e irrestrito a todos os cadastros, módulos e relatórios | ✅ Permitido | ✅ Permitido |
+| **`CONSULTA`** | Somente leitura de dados cadastrais de colaboradores e tabelas de apoio | ❌ **Bloqueado (HTTP 403)** | ❌ **Bloqueado (HTTP 403)** |
+
+### Credenciais Pré-configuradas para Avaliação:
+* **Perfil RH (Gestão Completa + Folha)**:
+  * Usuário: `admin.rh` | Senha: `rh123`
+  * Usuário: `yago.franca` | Senha: `yago123`
+* **Perfil Consulta (Somente Leitura / Sem Folha)**:
+  * Usuário: `user.consulta` | Senha: `consulta123`
+
+---
+
+## 🖥️ Páginas Dinâmicas com Thymeleaf (Fase 10)
+
+* **`/login`**: Tela de login corporativa com retorno de erro de autenticação e feedback de logout.
+* **`/colaboradores`**: Listagem dinâmica de colaboradores com badges por status e filtro por status (N-04).
+* **`/colaboradores/novo`**: Formulário de inclusão com validação de status.
+* **`/colaboradores/editar/{id}`**: Formulário de edição com proteção de máquina de estados.
+* **`/folhas`**: Gestão de Folha de Pagamento com cálculo automático de salário líquido (Regra R-05), restrito a usuários com perfil RH/ADMIN.
+* **`/acesso-negado`**: Página de erro personalizada HTTP 403 com explicação da política de acesso.
 
 ---
 
