@@ -70,10 +70,77 @@ body {
     color: var(--color-accent);
 }
 
-.navbar-nav {
+.navbar-actions {
     display: flex;
+    align-items: center;
     gap: 0.75rem;
-    list-style: none;
+}
+
+.nav-item-btn {
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 0.4rem 0.75rem;
+    border-radius: 6px;
+    background-color: rgba(255, 255, 255, 0.1);
+    transition: all 0.2s;
+}
+
+.nav-item-btn:hover {
+    background-color: var(--color-success);
+    color: #ffffff;
+}
+
+.user-profile-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: rgba(0, 0, 0, 0.25);
+    padding: 0.35rem 0.75rem;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.user-name {
+    color: #ffffff;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.badge-role-rh {
+    background-color: #2A835F;
+    color: #ffffff;
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-weight: 700;
+}
+
+.badge-role-consulta {
+    background-color: #0369a1;
+    color: #ffffff;
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-weight: 700;
+}
+
+.btn-outline-light {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    color: #ffffff;
+    cursor: pointer;
+    border-radius: 4px;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.btn-outline-light:hover {
+    background-color: #b91c1c;
+    border-color: #b91c1c;
 }
 
 /* Container */

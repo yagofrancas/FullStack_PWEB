@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Colaboradores • RH Manager</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<!-- Navbar Fragmentada -->
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container">
+
+    <!-- Mensagens de Sucesso ou Erro -->
+    <div th:if="${sucesso}" class="badge-status-ativo" style="padding: 1rem; border-radius: 8px; margin-bottom: 1.25rem; font-weight: 600;">
+        <span th:text="${sucesso}">Operação realizada com sucesso!</span>
+    </div>
+    <div th:if="${erro}" class="badge-status-desligado" style="padding: 1rem; border-radius: 8px; margin-bottom: 1.25rem; font-weight: 600;">
+        <span th:text="${erro}">Erro ao processar requisição.</span>
+    </div>
+
+    <!-- Card Principal de Colaboradores (Thymeleaf Server-Side) -->
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <h3>Gestão de Colaboradores (Renderizado via Thymeleaf)</h3>
+                <small style="color: #64748b;">
+                    Total de registros listados: <strong th:text="${#lists.size(colaboradores)}">0</strong>
+                </small>
+            </div>
+            <div>
+                <!-- Botão restrito ao perfil RH/ADMIN (Item 7 e 9 do Edital) -->
+                <a sec:authorize="hasAnyRole('RH', 'ADMIN', 'GESTOR_RH')" th:href="@{/colaboradores/novo}" class="btn btn-success">
+                    + Novo Colaborador
+                </a>
+                <span sec:authorize="!hasAnyRole('RH', 'ADMIN', 'GESTOR_RH')" class="badge badge-role-consulta">
+                    Visualização em Modo Consulta (Somente Leitura)
+                </span>
+            </div>
+        </div>
+
+        <div class="card-body">
+
+            <!-- Filtro por Status (Requisito N-04) -->
+            <form th:action="@{/colaboradores}" method="get" style="display: flex; gap: 10px; margin-bottom: 1.25rem; align-items: center;">
+                <label for="filtroStatus" style="font-size: 0.875rem; font-weight: 600; color: var(--color-dark);">Filtrar por Status:</label>
+                <select id="filtroStatus" name="status" class="form-select" style="max-width: 220px;" onchange="this.form.submit()">
+                    <option value="" th:selected="${param.status == null or param.status[0] == ''}">-- Todos os Status --</option>
+                    <option value="Ativo" th:selected="${param.status != null and param.status[0] == 'Ativo'}">Ativo</option>
+                    <option value="Afastado" th:selected="${param.status != null and param.status[0] == 'Afastado'}">Afastado</option>
+                    <option value="Férias" th:selected="${param.status != null and param.status[0] == 'Férias'}">Férias</option>
+                    <option value="Desligado" th:selected="${param.status != null and param.status[0] == 'Desligado'}">Desligado</option>
+                </select>
+                <a th:if="${param.status != null and param.status[0] != ''}" th:href="@{/colaboradores}" class="btn btn-secondary btn-sm">Limpar Filtro</a>
+            </form>
+
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                    <tr>
+                        <th style="width: 60px;">ID</th>
+                        <th>Código Anonimizado</th>
+                        <th>Cargo</th>
+                        <th>Departamento</th>
+                        <th>Unidade</th>
+                        <th>Salário Base</th>
+                        <th>Status</th>
+                        <th style="width: 170px;" class="text-center">Ações</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${#lists.isEmpty(colaboradores)}">
+                        <td colspan="8" class="text-center" style="padding: 2rem; color: #64748b;">
+                            Nenhum colaborador encontrado com os critérios selecionados.
+                        </td>
+                    </tr>
+                    <tr th:each="c : ${colaboradores}">
+                        <td th:text="${c.id_colaborador}">1</td>
+                        <td><strong th:text="${c.codigo_anonimizado}">COL-001</strong></td>
+                        <td th:text="${c.cargo != null ? c.cargo.nome_cargo : '-'}">Desenvolvedor</td>
+                        <td th:text="${c.departamento != null ? c.departamento.nome_departamento : '-'}">TI</td>
+                        <td th:text="${c.unidade != null ? c.unidade.nome_unidade : '-'}">Matriz</td>
+                        <td th:text="${c.salario_base != null ? 'R$ ' + #numbers.formatDecimal(c.salario_base, 1, 2, 'POINT') : '-'}">R$ 5000.00</td>
+                        <td>
+                            <!-- Badges com dot colorido por status -->
+                            <span th:if="${c.status_colaborador == 'Ativo' or c.status_colaborador == 'ATIVO'}" class="badge badge-status-ativo">
+                                <span class="badge-dot"></span> Ativo
+                            </span>
+                            <span th:if="${c.status_colaborador == 'Afastado' or c.status_colaborador == 'AFASTADO'}" class="badge badge-status-afastado">
+                                <span class="badge-dot"></span> Afastado
+                            </span>
+                            <span th:if="${c.status_colaborador == 'Férias' or c.status_colaborador == 'Ferias' or c.status_colaborador == 'FÉRIAS'}" class="badge badge-status-ferias">
+                                <span class="badge-dot"></span> Férias
+                            </span>
+                            <span th:if="${c.status_colaborador == 'Desligado' or c.status_colaborador == 'DESLIGADO'}" class="badge badge-status-desligado">
+                                <span class="badge-dot"></span> Desligado
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <!-- Ações restritas para perfil RH / ADMIN -->
+                            <div sec:authorize="hasAnyRole('RH', 'ADMIN', 'GESTOR_RH')" style="display: flex; gap: 6px; justify-content: center;">
+                                <a th:href="@{/colaboradores/editar/{id}(id=${c.id_colaborador})}" class="btn btn-outline-primary btn-sm">Editar</a>
+                                <a th:href="@{/colaboradores/excluir/{id}(id=${c.id_colaborador})}"
+                                   onclick="return confirm('Deseja realmente excluir este colaborador?')"
+                                   class="btn btn-danger btn-sm">Excluir</a>
+                            </div>
+                            <!-- Ações para usuário CONSULTA -->
+                            <div sec:authorize="!hasAnyRole('RH', 'ADMIN', 'GESTOR_RH')">
+                                <span style="font-size: 0.8rem; color: #94a3b8;">Somente Leitura</span>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

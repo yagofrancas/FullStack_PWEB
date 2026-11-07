@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Folha de Pagamento • RH Manager</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<!-- Navbar Fragmentada -->
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container">
+
+    <!-- Mensagens de Feedback -->
+    <div th:if="${sucesso}" class="badge-status-ativo" style="padding: 1rem; border-radius: 8px; margin-bottom: 1.25rem; font-weight: 600;">
+        <span th:text="${sucesso}">Operação realizada com sucesso!</span>
+    </div>
+    <div th:if="${erro}" class="badge-status-desligado" style="padding: 1rem; border-radius: 8px; margin-bottom: 1.25rem; font-weight: 600;">
+        <span th:text="${erro}">Erro ao processar folha de pagamento.</span>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <h3>Gestão de Folha de Pagamento (Módulo Restrito a RH/ADMIN)</h3>
+                <small style="color: #64748b;">
+                    Total de folhas registradas: <strong th:text="${#lists.size(folhas)}">0</strong>
+                </small>
+            </div>
+            <div>
+                <a th:href="@{/folhas/novo}" class="btn btn-success">+ Novo Lançamento de Folha</a>
+            </div>
+        </div>
+
+        <div class="card-body">
+
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                    <tr>
+                        <th style="width: 60px;">ID</th>
+                        <th>Colaborador</th>
+                        <th>Competência / Data</th>
+                        <th>Total de Vencimentos</th>
+                        <th>Total de Descontos</th>
+                        <th>Salário Líquido (Calculado)</th>
+                        <th style="width: 160px;" class="text-center">Ações</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${#lists.isEmpty(folhas)}">
+                        <td colspan="7" class="text-center" style="padding: 2rem; color: #64748b;">
+                            Nenhum registro de folha de pagamento cadastrado.
+                        </td>
+                    </tr>
+                    <tr th:each="f : ${folhas}">
+                        <td th:text="${f.id_folha}">1</td>
+                        <td>
+                            <strong th:text="${f.colaborador != null ? f.colaborador.codigo_anonimizado : 'Colab #' + f.id_colaborador}">COL-001</strong>
+                            <small th:if="${f.colaborador != null and f.colaborador.cargo != null}" style="display: block; color: #64748b;" th:text="${f.colaborador.cargo.nome_cargo}"></small>
+                        </td>
+                        <td th:text="${f.data_referencia != null ? f.data_referencia : '-'}">2026-10-01</td>
+                        <td style="color: #15803d; font-weight: 600;" th:text="${f.total_vencimentos != null ? 'R$ ' + #numbers.formatDecimal(f.total_vencimentos, 1, 2, 'POINT') : 'R$ 0.00'}">R$ 6000.00</td>
+                        <td style="color: #b91c1c; font-weight: 600;" th:text="${f.total_descontos != null ? 'R$ ' + #numbers.formatDecimal(f.total_descontos, 1, 2, 'POINT') : 'R$ 0.00'}">R$ 1200.00</td>
+                        <td>
+                            <strong style="color: #092328; font-size: 1rem;" th:text="${f.salario_liquido != null ? 'R$ ' + #numbers.formatDecimal(f.salario_liquido, 1, 2, 'POINT') : 'R$ 0.00'}">R$ 4800.00</strong>
+                        </td>
+                        <td class="text-center">
+                            <div style="display: flex; gap: 6px; justify-content: center;">
+                                <a th:href="@{/folhas/editar/{id}(id=${f.id_folha})}" class="btn btn-outline-primary btn-sm">Editar</a>
+                                <a th:href="@{/folhas/excluir/{id}(id=${f.id_folha})}"
+                                   onclick="return confirm('Deseja realmente excluir esta folha de pagamento?')"
+                                   class="btn btn-danger btn-sm">Excluir</a>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

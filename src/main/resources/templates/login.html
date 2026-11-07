@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login • RH Manager</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #092328 0%, #12544F 100%);
+            margin: 0;
+            padding: 1.5rem;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        .login-card {
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(9, 35, 40, 0.35);
+            width: 100%;
+            max-width: 440px;
+            overflow: hidden;
+            border-top: 5px solid #2A835F;
+        }
+
+        .login-header {
+            padding: 2rem 2rem 1rem 2rem;
+            text-align: center;
+            background-color: #fafbfc;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .login-header h2 {
+            margin: 0 0 0.4rem 0;
+            font-size: 1.5rem;
+            color: #092328;
+            font-weight: 700;
+        }
+
+        .login-header p {
+            margin: 0;
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        .login-body {
+            padding: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.45rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 0.9rem;
+            font-size: 0.95rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            box-sizing: border-box;
+            transition: all 0.2s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #12544F;
+            box-shadow: 0 0 0 3px rgba(18, 84, 79, 0.2);
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 0.8rem;
+            background-color: #12544F;
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 0.5rem;
+        }
+
+        .btn-login:hover {
+            background-color: #092328;
+        }
+
+        .alert {
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .alert-danger {
+            background-color: #fee2e2;
+            color: #b91c1c;
+            border: 1px solid #fca5a5;
+        }
+
+        .alert-success {
+            background-color: #d1fae5;
+            color: #15803d;
+            border: 1px solid #86efac;
+        }
+
+        .credentials-box {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            color: #334155;
+        }
+
+        .credentials-box strong {
+            color: #092328;
+        }
+
+        .credentials-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.25rem 0;
+            border-bottom: 1px dashed #cbd5e1;
+        }
+        .credentials-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-card">
+    <div class="login-header">
+        <h2>RH Manager</h2>
+        <p>Projeto Integrador • Programação Web ESEG</p>
+    </div>
+
+    <div class="login-body">
+
+        <!-- Mensagens de Feedback de Autenticação -->
+        <div th:if="${param.error}" class="alert alert-danger">
+            Usuário ou senha incorretos. Por favor, tente novamente.
+        </div>
+        <div th:if="${param.logout}" class="alert alert-success">
+            Sessão encerrada com sucesso!
+        </div>
+
+        <form th:action="@{/login}" method="post">
+            <div class="form-group">
+                <label class="form-label" for="username">Usuário (Login)</label>
+                <input class="form-control" type="text" id="username" name="username" placeholder="ex: admin.rh ou user.consulta" required autofocus>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="password">Senha</label>
+                <input class="form-control" type="password" id="password" name="password" placeholder="Digite sua senha" required>
+            </div>
+
+            <button type="submit" class="btn-login">Entrar no Sistema</button>
+        </form>
+
+        <!-- Informações de Teste para Avaliação (Edital Fases 09 e 10) -->
+        <div class="credentials-box">
+            <strong>Credenciais para Avaliação:</strong>
+            <div class="credentials-item">
+                <span>Perfil RH (Gestão Completa):</span>
+                <code>admin.rh / rh123</code>
+            </div>
+            <div class="credentials-item">
+                <span>Perfil Consulta (Sem Folha):</span>
+                <code>user.consulta / consulta123</code>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

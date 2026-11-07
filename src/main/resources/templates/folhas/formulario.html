@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lançamento de Folha • RH Manager</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<!-- Navbar Fragmentada -->
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container" style="max-width: 760px;">
+
+    <div th:if="${erro}" class="badge-status-desligado" style="padding: 1rem; border-radius: 8px; margin-bottom: 1.25rem; font-weight: 600;">
+        <span th:text="${erro}">Erro no lançamento de folha.</span>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 th:text="${folha.id_folha == null ? 'Novo Lançamento de Folha' : 'Editar Folha de Pagamento'}">
+                Lançamento de Folha de Pagamento
+            </h3>
+            <a th:href="@{/folhas}" class="btn btn-secondary btn-sm">Voltar para a Lista</a>
+        </div>
+
+        <div class="card-body">
+
+            <form th:action="@{/folhas/salvar}" th:object="${folha}" method="post">
+                <input type="hidden" th:field="*{id_folha}">
+
+                <div class="mb-3">
+                    <label class="form-label" for="id_colaborador">Colaborador *</label>
+                    <select class="form-select" id="id_colaborador" th:field="*{id_colaborador}" required>
+                        <option value="">-- Selecione o Colaborador --</option>
+                        <option th:each="c : ${colaboradores}" th:value="${c.id_colaborador}"
+                                th:text="${c.codigo_anonimizado + ' - Salário Base: R$ ' + c.salario_base}">
+                            COL-001
+                        </option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" for="data_referencia">Data de Referência / Competência *</label>
+                    <input class="form-control" type="date" id="data_referencia" th:field="*{data_referencia}" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" for="total_vencimentos">Total de Vencimentos (R$) *</label>
+                    <input class="form-control" type="number" step="0.01" id="total_vencimentos" th:field="*{total_vencimentos}" placeholder="ex: 7500.00" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" for="total_descontos">Total de Descontos (R$) *</label>
+                    <input class="form-control" type="number" step="0.01" id="total_descontos" th:field="*{total_descontos}" placeholder="ex: 1500.00" required>
+                </div>
+
+                <div class="alert" style="background-color: #e0f2fe; border: 1px solid #7dd3fc; color: #0369a1; padding: 0.75rem 1rem; border-radius: 6px; font-size: 0.85rem;">
+                    💡 <strong>Cálculo Automático (Regra R-05):</strong> O salário líquido é calculado automaticamente pelo backend (<code>Salário Líquido = Vencimentos - Descontos</code>) ao salvar o formulário.
+                </div>
+
+                <div style="margin-top: 1.5rem; display: flex; gap: 10px; justify-content: flex-end;">
+                    <a th:href="@{/folhas}" class="btn btn-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-primary">Salvar Folha de Pagamento</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

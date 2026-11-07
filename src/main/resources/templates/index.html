@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -86,19 +86,8 @@
         <div class="palette-4" title="#8BBB92"></div>
     </div>
 
-    <!-- Navbar Estilo Bootstrap com cores do Color Hunt -->
-    <nav class="navbar">
-        <a class="navbar-brand" href="/">
-            <div>
-                <strong>RH Manager</strong> &bull; Sistema de Gestão
-                <small>Projeto P2 &bull; Mapeamento Astah JPA + CRUD</small>
-            </div>
-        </a>
-        <div class="navbar-nav">
-            <a href="/h2-console" target="_blank" class="btn btn-accent btn-sm">&#9881; H2 Console</a>
-            <a href="/api/colaboradores" target="_blank" class="btn btn-outline-primary btn-sm" style="color: white; border-color: var(--color-accent);">&#123; JSON &#125; API REST</a>
-        </div>
-    </nav>
+    <!-- Navbar Fragmentada com Usuário Autenticado, Badge de Perfil e Logout -->
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
 
     <div class="container">
 
@@ -109,18 +98,21 @@
             <button class="nav-link" onclick="switchTab('unidades')">Unidades</button>
             <button class="nav-link" onclick="switchTab('colaboradores')">Colaboradores</button>
             <button class="nav-link" onclick="switchTab('beneficios')">Benefícios</button>
-            <button class="nav-link" onclick="switchTab('folhas')">Folha de Pagamento</button>
-            <button class="nav-link" onclick="switchTab('perfis')">Perfis</button>
-            <button class="nav-link" onclick="switchTab('usuarios')">Usuários</button>
+            <button sec:authorize="hasAnyRole('RH', 'ADMIN', 'GESTOR_RH')" class="nav-link" onclick="switchTab('folhas')">Folha de Pagamento</button>
+            <button sec:authorize="hasAnyRole('RH', 'ADMIN', 'GESTOR_RH')" class="nav-link" onclick="switchTab('perfis')">Perfis</button>
+            <button sec:authorize="hasAnyRole('RH', 'ADMIN', 'GESTOR_RH')" class="nav-link" onclick="switchTab('usuarios')">Usuários</button>
             <button class="nav-link" onclick="switchTab('colaborador_beneficio')">Colaborador x Benefício</button>
-            <button class="nav-link" onclick="switchTab('usuario_perfil')">Usuário x Perfil</button>
+            <button sec:authorize="hasAnyRole('RH', 'ADMIN', 'GESTOR_RH')" class="nav-link" onclick="switchTab('usuario_perfil')">Usuário x Perfil</button>
         </div>
 
         <!-- Card Principal (Bootstrap Card) -->
         <div class="card">
             <div class="card-header">
                 <h3 id="panel-title">Departamentos</h3>
-                <button class="btn btn-success" id="btn-novo" onclick="abrirModalCriar()">+ Novo Registro</button>
+                <div>
+                    <button sec:authorize="hasAnyRole('RH', 'ADMIN', 'GESTOR_RH')" class="btn btn-success" id="btn-novo" onclick="abrirModalCriar()">+ Novo Registro</button>
+                    <span sec:authorize="!hasAnyRole('RH', 'ADMIN', 'GESTOR_RH')" class="badge badge-role-consulta">Perfil Consulta (Somente Leitura)</span>
+                </div>
             </div>
             <div class="card-body">
                 <div class="table-responsive" id="table-container">

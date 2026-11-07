@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="pt-br">
+<body>
+<nav class="navbar" th:fragment="navbar">
+    <div class="navbar-brand">
+        <h1>RH Manager • Sistema de Gestão</h1>
+        <small>Projeto Integrador • ESEG Programação Web 2S2026</small>
+    </div>
+    <div class="navbar-actions">
+        <!-- Links de Navegação Server-Side Thymeleaf -->
+        <a th:href="@{/colaboradores}" class="nav-item-btn">Colaboradores</a>
+        <a sec:authorize="hasAnyRole('RH', 'ADMIN', 'GESTOR_RH')" th:href="@{/folhas}" class="nav-item-btn">Folha de Pagamento</a>
+        <a th:href="@{/}" class="nav-item-btn">Painel Geral (CRUDs)</a>
+        <a href="/h2-console" target="_blank" class="nav-item-btn">⚙ H2 Console</a>
+
+        <!-- Informações do Usuário Autenticado (Spring Security) -->
+        <div class="user-profile-badge">
+            <span class="user-name" sec:authentication="name">Usuário</span>
+            <span sec:authorize="hasAnyRole('RH', 'ADMIN', 'GESTOR_RH')" class="badge badge-role-rh">RH / ADMIN</span>
+            <span sec:authorize="!hasAnyRole('RH', 'ADMIN', 'GESTOR_RH')" class="badge badge-role-consulta">CONSULTA</span>
+        </div>
+
+        <!-- Botão de Logout -->
+        <form th:action="@{/logout}" method="post" style="display: inline; margin: 0;">
+            <button type="submit" class="btn btn-outline-light btn-sm">Sair</button>
+        </form>
+    </div>
+</nav>
+</body>
+</html>

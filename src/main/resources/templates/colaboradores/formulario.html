@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulário de Colaborador • RH Manager</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.25rem;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navbar Fragmentada -->
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container" style="max-width: 900px;">
+
+    <!-- Alerta de Erro de Transição de Status ou Validação -->
+    <div th:if="${erro}" class="badge-status-desligado" style="padding: 1rem; border-radius: 8px; margin-bottom: 1.25rem; font-weight: 600;">
+        <strong>Atenção:</strong> <span th:text="${erro}">Mensagem de erro de validação.</span>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 th:text="${colaborador.id_colaborador == null ? 'Novo Colaborador' : 'Editar Colaborador'}">
+                Formulário de Colaborador
+            </h3>
+            <a th:href="@{/colaboradores}" class="btn btn-secondary btn-sm">Voltar para a Lista</a>
+        </div>
+
+        <div class="card-body">
+
+            <form th:action="@{/colaboradores/salvar}" th:object="${colaborador}" method="post">
+                <input type="hidden" th:field="*{id_colaborador}">
+
+                <div class="form-grid">
+                    <div class="mb-3">
+                        <label class="form-label" for="codigo_anonimizado">Código Anonimizado *</label>
+                        <input class="form-control" type="text" id="codigo_anonimizado" th:field="*{codigo_anonimizado}" placeholder="ex: COL-0001" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="status_colaborador">Status do Colaborador *</label>
+                        <select class="form-select" id="status_colaborador" th:field="*{status_colaborador}" required>
+                            <option value="Ativo">Ativo</option>
+                            <option value="Afastado">Afastado</option>
+                            <option value="Férias">Férias</option>
+                            <option value="Desligado">Desligado</option>
+                        </select>
+                        <small style="color: #64748b; font-size: 0.75rem;">
+                            Nota: O status 'Desligado' é terminal e bloqueia futuras reativações diretas.
+                        </small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="salario_base">Salário Base (R$) *</label>
+                        <input class="form-control" type="number" step="0.01" id="salario_base" th:field="*{salario_base}" placeholder="ex: 5500.00" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="escolaridade">Escolaridade</label>
+                        <input class="form-control" type="text" id="escolaridade" th:field="*{escolaridade}" placeholder="ex: Ensino Superior Completo">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="regime_contratacao">Regime de Contratação</label>
+                        <input class="form-control" type="text" id="regime_contratacao" th:field="*{regime_contratacao}" placeholder="ex: CLT ou PJ">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="modelo_trabalho">Modelo de Trabalho</label>
+                        <input class="form-control" type="text" id="modelo_trabalho" th:field="*{modelo_trabalho}" placeholder="ex: Híbrido, Presencial ou Remoto">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="data_nascimento">Data de Nascimento</label>
+                        <input class="form-control" type="date" id="data_nascimento" th:field="*{data_nascimento}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="data_admissao">Data de Admissão</label>
+                        <input class="form-control" type="date" id="data_admissao" th:field="*{data_admissao}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="id_departamento">Departamento</label>
+                        <select class="form-select" id="id_departamento" th:field="*{id_departamento}">
+                            <option value="">-- Selecione o Departamento --</option>
+                            <option th:each="dep : ${departamentos}" th:value="${dep.id_departamento}" th:text="${dep.nome_departamento}">
+                                TI
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="id_cargo">Cargo</label>
+                        <select class="form-select" id="id_cargo" th:field="*{id_cargo}">
+                            <option value="">-- Selecione o Cargo --</option>
+                            <option th:each="car : ${cargos}" th:value="${car.id_cargo}" th:text="${car.nome_cargo}">
+                                Desenvolvedor
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="id_unidade">Unidade</label>
+                        <select class="form-select" id="id_unidade" th:field="*{id_unidade}">
+                            <option value="">-- Selecione a Unidade --</option>
+                            <option th:each="uni : ${unidades}" th:value="${uni.id_unidade}" th:text="${uni.nome_unidade}">
+                                Matriz
+                            </option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="margin-top: 1.5rem; display: flex; gap: 10px; justify-content: flex-end;">
+                    <a th:href="@{/colaboradores}" class="btn btn-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-primary">Salvar Colaborador</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>
