@@ -1254,3 +1254,13 @@ INSERT INTO folha_pagamento (id_folha, data_referencia, total_vencimentos, total
 INSERT INTO folha_pagamento (id_folha, data_referencia, total_vencimentos, total_descontos, salario_liquido, id_colaborador) VALUES (98, '2024-01-01', 2932.5, 494.78, 2437.72, 3);
 INSERT INTO folha_pagamento (id_folha, data_referencia, total_vencimentos, total_descontos, salario_liquido, id_colaborador) VALUES (99, '2024-01-01', 26550.15, 3860.81, 22689.34, 436);
 INSERT INTO folha_pagamento (id_folha, data_referencia, total_vencimentos, total_descontos, salario_liquido, id_colaborador) VALUES (100, '2024-01-01', 6546.19, 657.81, 5888.38, 131);
+
+ALTER TABLE perfil ALTER COLUMN id_perfil RESTART WITH 4;
+ALTER TABLE usuario ALTER COLUMN id_usuario RESTART WITH 3;
+ALTER TABLE departamento ALTER COLUMN id_departamento RESTART WITH 11;
+ALTER TABLE cargo ALTER COLUMN id_cargo RESTART WITH 218;
+ALTER TABLE unidade ALTER COLUMN id_unidade RESTART WITH 11;
+ALTER TABLE colaborador ALTER COLUMN id_colaborador RESTART WITH 901;
+ALTER TABLE beneficio ALTER COLUMN id_beneficio RESTART WITH 7;
+ALTER TABLE folha_pagamento ALTER COLUMN id_folha RESTART WITH 101;
+

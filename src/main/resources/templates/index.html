@@ -92,6 +92,7 @@
     <div class="container">
 
         <!-- Abas de Navegação (Bootstrap 5 nav-tabs com botões diretos sem li/bolinhas) -->
+        <div id="rh-write-permission" sec:authorize="hasAnyRole('RH', 'ADMIN', 'GESTOR_RH')" style="display: none;"></div>
         <div class="nav-tabs" id="tabs" role="tablist">
             <button class="nav-link active" onclick="switchTab('departamentos')">Departamentos</button>
             <button class="nav-link" onclick="switchTab('cargos')">Cargos</button>
@@ -136,7 +137,7 @@
                         <!-- Campos gerados dinamicamente -->
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" onclick="fecharModal()">Cancelar</button>
+                        <button type="button" class="btn btn-secondary" id="modal-cancel" onclick="fecharModal()">Cancelar</button>
                         <button type="submit" class="btn btn-primary" id="modal-submit">Salvar Registro</button>
                     </div>
                 </form>
@@ -146,7 +147,9 @@
 
     <script>
         let currentTab = 'departamentos';
+        let currentItems = [];
         let auxData = {};
+        const canWrite = document.getElementById('rh-write-permission') !== null;
 
         const configs = {
             departamentos: {
@@ -371,33 +374,50 @@
                 const res = await fetch(cfg.url);
                 if (!res.ok) throw new Error("Status " + res.status);
                 const data = await res.json();
+                currentItems = Array.isArray(data) ? data : [];
 
-                if (!Array.isArray(data) || data.length === 0) {
-                    container.innerHTML = '<div class="empty-state">Nenhum registro encontrado no banco de dados. Clique em <strong>+ Novo Registro</strong> para adicionar.</div>';
+                if (currentItems.length === 0) {
+                    const emptyHint = canWrite
+                        ? 'Nenhum registro encontrado no banco de dados. Clique em <strong>+ Novo Registro</strong> para adicionar.'
+                        : 'Nenhum registro encontrado no banco de dados.';
+                    container.innerHTML = `<div class="empty-state">${emptyHint}</div>`;
                     return;
                 }
+
+                // Para perfil Consulta: exibe "Ações" apenas em Colaboradores (com botão Detalhes); oculta nas demais abas (Departamentos, Cargos, Unidades, etc.)
+                const showActionsCol = canWrite || currentTab === 'colaboradores';
 
                 let html = '<table class="table table-hover"><thead><tr>';
                 cfg.columns.forEach(col => {
                     html += `<th>${col.label}</th>`;
                 });
-                html += '<th style="text-align: right;">Ações</th></tr></thead><tbody>';
+                if (showActionsCol) {
+                    html += '<th style="text-align: right;">Ações</th>';
+                }
+                html += '</tr></thead><tbody>';
 
-                data.forEach(item => {
+                currentItems.forEach((item, idx) => {
                     html += '<tr>';
                     cfg.columns.forEach(col => {
                         let val = col.render ? col.render(item) : (item[col.key] !== null && item[col.key] !== undefined ? item[col.key] : '-');
                         html += `<td>${val}</td>`;
                     });
 
-                    html += '<td style="text-align: right;"><div style="display: flex; gap: 6px; justify-content: flex-end;">';
-                    if (!cfg.isComposite) {
-                        html += `<button class="btn btn-secondary btn-sm" onclick='abrirModalEditar(${JSON.stringify(item)})'>Editar</button>`;
-                        html += `<button class="btn btn-danger btn-sm" onclick='deletarRegistro(${item[cfg.idField]})'>Excluir</button>`;
-                    } else {
-                        html += `<button class="btn btn-danger btn-sm" onclick='deletarComposto(${item[cfg.idKeys[0]]}, ${item[cfg.idKeys[1]]})'>Remover</button>`;
+                    if (showActionsCol) {
+                        html += '<td style="text-align: right;"><div style="display: flex; gap: 6px; justify-content: flex-end;">';
+                        if (canWrite) {
+                            if (!cfg.isComposite) {
+                                html += `<button class="btn btn-secondary btn-sm" onclick="abrirModalEditar(${idx})">Editar</button>`;
+                                html += `<button class="btn btn-danger btn-sm" onclick="deletarRegistro(${item[cfg.idField]})">Excluir</button>`;
+                            } else {
+                                html += `<button class="btn btn-danger btn-sm" onclick="deletarComposto(${item[cfg.idKeys[0]]}, ${item[cfg.idKeys[1]]})">Remover</button>`;
+                            }
+                        } else if (currentTab === 'colaboradores') {
+                            html += `<button class="btn btn-outline-primary btn-sm" onclick="abrirModalDetalhes(${idx})">Detalhes</button>`;
+                        }
+                        html += '</div></td>';
                     }
-                    html += '</div></td></tr>';
+                    html += '</tr>';
                 });
 
                 html += '</tbody></table>';
@@ -410,26 +430,42 @@
         function abrirModalCriar() {
             const cfg = configs[currentTab];
             document.getElementById('modal-title').innerText = 'Novo(a) ' + cfg.title;
-            renderFormFields(null);
+            document.getElementById('modal-submit').style.display = 'inline-block';
+            document.getElementById('modal-cancel').innerText = 'Cancelar';
+            renderFormFields(null, false);
             document.getElementById('modal').classList.add('active');
         }
 
-        function abrirModalEditar(item) {
+        function abrirModalEditar(index) {
             const cfg = configs[currentTab];
+            const item = currentItems[index];
             document.getElementById('modal-title').innerText = 'Editar ' + cfg.title;
-            renderFormFields(item);
+            document.getElementById('modal-submit').style.display = 'inline-block';
+            document.getElementById('modal-cancel').innerText = 'Cancelar';
+            renderFormFields(item, false);
             document.getElementById('modal').classList.add('active');
         }
 
-        function renderFormFields(item) {
+        function abrirModalDetalhes(index) {
+            const cfg = configs[currentTab];
+            const item = currentItems[index];
+            document.getElementById('modal-title').innerText = 'Detalhes • ' + cfg.title;
+            document.getElementById('modal-submit').style.display = 'none';
+            document.getElementById('modal-cancel').innerText = 'Fechar';
+            renderFormFields(item, true);
+            document.getElementById('modal').classList.add('active');
+        }
+
+        function renderFormFields(item, readOnly = false) {
             const cfg = configs[currentTab];
             const body = document.getElementById('modal-body');
             body.innerHTML = '';
+            const disabledAttr = readOnly ? 'disabled' : '';
 
             cfg.fields.forEach(f => {
                 let val = '';
                 if (item) {
-                    val = item[f.name] !== undefined ? item[f.name] : '';
+                    val = item[f.name] !== undefined && item[f.name] !== null ? item[f.name] : '';
                     if (!val && f.name.startsWith('id_') && item[f.name.replace('id_', '')]) {
                         val = item[f.name.replace('id_', '')]['id_' + f.name.replace('id_', '')] || '';
                     }
@@ -441,7 +477,7 @@
                     body.innerHTML += `<input type="hidden" name="${f.name}" value="${val}">`;
                 } else if (f.type === 'select') {
                     const opts = auxData[f.optionsKey] || [];
-                    let optHtml = `<div class="mb-3"><label class="form-label">${f.label}</label><select class="form-select" name="${f.name}" ${f.required ? 'required' : ''}>`;
+                    let optHtml = `<div class="mb-3"><label class="form-label">${f.label}</label><select class="form-select" name="${f.name}" ${f.required ? 'required' : ''} ${disabledAttr}>`;
                     optHtml += '<option value="">-- Selecione uma opção --</option>';
                     opts.forEach(o => {
                         const sel = String(o.value) === String(val) ? 'selected' : '';
@@ -450,7 +486,7 @@
                     optHtml += '</select></div>';
                     body.innerHTML += optHtml;
                 } else if (f.type === 'select-custom') {
-                    let optHtml = `<div class="mb-3"><label class="form-label">${f.label}</label><select class="form-select" name="${f.name}" ${f.required ? 'required' : ''}>`;
+                    let optHtml = `<div class="mb-3"><label class="form-label">${f.label}</label><select class="form-select" name="${f.name}" ${f.required ? 'required' : ''} ${disabledAttr}>`;
                     (f.options || []).forEach(opt => {
                         const sel = String(opt).toLowerCase() === String(val).toLowerCase() ? 'selected' : '';
                         optHtml += `<option value="${opt}" ${sel}>${opt}</option>`;
@@ -461,7 +497,7 @@
                     body.innerHTML += `
                         <div class="mb-3">
                             <label class="form-label">${f.label}</label>
-                            <input class="form-control" type="${f.type}" name="${f.name}" value="${val}" ${f.step ? 'step="' + f.step + '"' : ''} ${f.required ? 'required' : ''}>
+                            <input class="form-control" type="${f.type}" name="${f.name}" value="${val}" ${f.step ? 'step="' + f.step + '"' : ''} ${f.required ? 'required' : ''} ${disabledAttr}>
                         </div>
                     `;
                 }

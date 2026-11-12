@@ -108,7 +108,7 @@
                             </div>
                             <!-- Ações para usuário CONSULTA -->
                             <div sec:authorize="!hasAnyRole('RH', 'ADMIN', 'GESTOR_RH')">
-                                <span style="font-size: 0.8rem; color: #94a3b8;">Somente Leitura</span>
+                                <a th:href="@{/colaboradores/detalhes/{id}(id=${c.id_colaborador})}" class="btn btn-outline-primary btn-sm">Detalhes</a>
                             </div>
                         </td>
                     </tr>

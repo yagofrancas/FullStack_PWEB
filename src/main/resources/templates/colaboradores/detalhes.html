@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes do Colaborador • RH Manager</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1.25rem;
+        }
+        .detail-item {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 0.9rem 1rem;
+        }
+        .detail-label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            color: #64748b;
+            margin-bottom: 0.35rem;
+        }
+        .detail-value {
+            font-size: 0.98rem;
+            font-weight: 600;
+            color: #092328;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navbar Fragmentada -->
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container" style="max-width: 920px;">
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <h3>Detalhes do Colaborador</h3>
+                <small style="color: #64748b;">
+                    Registro #<strong th:text="${colaborador.id_colaborador}">1</strong> •
+                    Código <strong th:text="${colaborador.codigo_anonimizado}">COL-001</strong>
+                </small>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <a sec:authorize="hasAnyRole('RH', 'ADMIN', 'GESTOR_RH')"
+                   th:href="@{/colaboradores/editar/{id}(id=${colaborador.id_colaborador})}"
+                   class="btn btn-primary btn-sm">Editar Colaborador</a>
+                <a th:href="@{/colaboradores}" class="btn btn-secondary btn-sm">Voltar para a Lista</a>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Código Anonimizado</span>
+                    <span class="detail-value" th:text="${colaborador.codigo_anonimizado ?: '-'}">COL-001</span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Status</span>
+                    <div>
+                        <span th:if="${colaborador.status_colaborador == 'Ativo' or colaborador.status_colaborador == 'ATIVO'}" class="badge badge-status-ativo">
+                            <span class="badge-dot"></span> Ativo
+                        </span>
+                        <span th:if="${colaborador.status_colaborador == 'Afastado' or colaborador.status_colaborador == 'AFASTADO'}" class="badge badge-status-afastado">
+                            <span class="badge-dot"></span> Afastado
+                        </span>
+                        <span th:if="${colaborador.status_colaborador == 'Férias' or colaborador.status_colaborador == 'Ferias' or colaborador.status_colaborador == 'FÉRIAS'}" class="badge badge-status-ferias">
+                            <span class="badge-dot"></span> Férias
+                        </span>
+                        <span th:if="${colaborador.status_colaborador == 'Desligado' or colaborador.status_colaborador == 'DESLIGADO'}" class="badge badge-status-desligado">
+                            <span class="badge-dot"></span> Desligado
+                        </span>
+                    </div>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Salário Base</span>
+                    <span class="detail-value" th:text="${colaborador.salario_base != null ? 'R$ ' + #numbers.formatDecimal(colaborador.salario_base, 1, 2, 'POINT') : '-'}">R$ 5000.00</span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Cargo</span>
+                    <span class="detail-value" th:text="${colaborador.cargo != null ? colaborador.cargo.nome_cargo + (colaborador.cargo.nivel != null ? ' (' + colaborador.cargo.nivel + ')' : '') : '-'}">Desenvolvedor</span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Departamento</span>
+                    <span class="detail-value" th:text="${colaborador.departamento != null ? colaborador.departamento.nome_departamento : '-'}">TI</span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Unidade</span>
+                    <span class="detail-value" th:text="${colaborador.unidade != null ? colaborador.unidade.nome_unidade + (colaborador.unidade.cidade != null ? ' - ' + colaborador.unidade.cidade : '') : '-'}">Matriz</span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Escolaridade</span>
+                    <span class="detail-value" th:text="${colaborador.escolaridade != null and !colaborador.escolaridade.isEmpty() ? colaborador.escolaridade : '-'}">-</span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Regime de Contratação</span>
+                    <span class="detail-value" th:text="${colaborador.regime_contratacao != null and !colaborador.regime_contratacao.isEmpty() ? colaborador.regime_contratacao : '-'}">-</span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Modelo de Trabalho</span>
+                    <span class="detail-value" th:text="${colaborador.modelo_trabalho != null and !colaborador.modelo_trabalho.isEmpty() ? colaborador.modelo_trabalho : '-'}">-</span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Data de Nascimento</span>
+                    <span class="detail-value" th:text="${colaborador.data_nascimento != null ? #temporals.format(colaborador.data_nascimento, 'dd/MM/yyyy') : '-'}">-</span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Data de Admissão</span>
+                    <span class="detail-value" th:text="${colaborador.data_admissao != null ? #temporals.format(colaborador.data_admissao, 'dd/MM/yyyy') : '-'}">-</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
+

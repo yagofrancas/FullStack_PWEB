@@ -10,11 +10,14 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrlPattern;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
 @SpringBootTest
@@ -45,7 +48,7 @@ class SecurityIntegrationTest {
 	void deveRedirecionarParaLoginQuandoNaoAutenticado() throws Exception {
 		mockMvc.perform(get("/colaboradores"))
 				.andExpect(status().is3xxRedirection())
-				.andExpect(redirectedUrlPattern("**/login"));
+				.andExpect(redirectedUrl("/login"));
 	}
 
 	@Test
@@ -88,5 +91,37 @@ class SecurityIntegrationTest {
 
 		mockMvc.perform(get("/colaboradores/novo"))
 				.andExpect(status().isOk());
+	}
+
+	@Test
+	@WithMockUser(username = "user.consulta", roles = {"CONSULTA"})
+	@DisplayName("Perfil CONSULTA: Painel inicial deve ocultar flag de escrita e /colaboradores deve exibir botão Detalhes")
+	void deveExibirInterfaceSomenteLeituraEDetalhesParaPerfilConsulta() throws Exception {
+		mockMvc.perform(get("/"))
+				.andExpect(status().isOk())
+				.andExpect(content().string(not(containsString("id=\"rh-write-permission\""))));
+
+		mockMvc.perform(get("/colaboradores"))
+				.andExpect(status().isOk())
+				.andExpect(content().string(containsString("Detalhes")))
+				.andExpect(content().string(not(containsString("/colaboradores/editar/"))));
+	}
+
+	@Test
+	@WithMockUser(username = "user.consulta", roles = {"CONSULTA"})
+	@DisplayName("Perfil CONSULTA: Deve permitir acesso à tela de detalhes de colaborador existente")
+	void devePermitirAcessoAosDetalhesDoColaboradorParaPerfilConsulta() throws Exception {
+		mockMvc.perform(get("/colaboradores/detalhes/1"))
+				.andExpect(status().isOk())
+				.andExpect(content().string(containsString("Detalhes do Colaborador")));
+	}
+
+	@Test
+	@WithMockUser(username = "admin.rh", roles = {"RH"})
+	@DisplayName("Perfil RH: Painel inicial deve habilitar flag de escrita para edição e exclusão")
+	void deveHabilitarAcoesEscritaNoPainelParaPerfilRH() throws Exception {
+		mockMvc.perform(get("/"))
+				.andExpect(status().isOk())
+				.andExpect(content().string(containsString("id=\"rh-write-permission\"")));
 	}
 }

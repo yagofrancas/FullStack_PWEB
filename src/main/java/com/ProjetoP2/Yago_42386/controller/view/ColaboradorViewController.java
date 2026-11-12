@@ -50,6 +50,17 @@ public class ColaboradorViewController {
 		return "colaboradores/lista";
 	}
 
+	@GetMapping("/detalhes/{id}")
+	public String detalhes(@PathVariable Integer id, Model model, RedirectAttributes redirectAttrs) {
+		return colService.buscarPorId(id).map(col -> {
+			model.addAttribute("colaborador", col);
+			return "colaboradores/detalhes";
+		}).orElseGet(() -> {
+			redirectAttrs.addFlashAttribute("erro", "Colaborador não encontrado com ID: " + id);
+			return "redirect:/colaboradores";
+		});
+	}
+
 	@GetMapping("/novo")
 	@PreAuthorize("hasAnyRole('RH', 'ADMIN', 'GESTOR_RH')")
 	public String novoFormulario(Model model) {
