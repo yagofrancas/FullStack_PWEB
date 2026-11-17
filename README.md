@@ -84,22 +84,35 @@ A estilização visual da aplicação obedece rigorosamente à paleta corporativ
 
 ---
 
+## 🔗 Entidades Associativas (N:N): `colaborador_beneficio` e `usuario_perfil`
+
+Para manter o banco relacional normalizado (sem colunas multivaloradas ou duplicação de dados), os relacionamentos **muitos-para-muitos (N:N)** do modelo são representados por duas tabelas associativas com chave primária composta (`@EmbeddedId` no JPA):
+
+1. **`colaborador_beneficio`** (chave composta `colaborador_beneficio_id`: `id_colaborador` + `id_beneficio`)
+   * **Por que existe**: um colaborador pode possuir vários benefícios (Vale Alimentação, Plano de Saúde, Auxílio Home Office etc.) e um mesmo benefício pode estar associado a centenas de colaboradores.
+   * **API REST**: `/api/colaboradores-beneficios` (consulta por colaborador/benefício, associação e remoção).
+   * **Como aparece na interface**: embutida diretamente no formulário (`/colaboradores/novo` e `/colaboradores/editar/{id}`) por meio de *checkboxes* de **Benefícios Vinculados** e exibida na tela de detalhes (`/colaboradores/detalhes/{id}`), evitando uma aba separada no Painel Geral.
+
+2. **`usuario_perfil`** (chave composta `usuario_perfil_id`: `id_usuario` + `id_perfil`)
+   * **Por que existe**: desacopla as contas de login (`usuario`) dos papéis de segurança (`perfil`), permitindo que um usuário tenha um ou mais perfis de acesso sem duplicar cadastros.
+   * **API REST**: `/api/usuarios-perfis` (usada pelo Spring Security via `CustomUserDetailsService` para carregar as `ROLE_*` do usuário).
+   * **Como aparece na interface**: embutida diretamente na aba **Usuários** do Painel Geral (`/`), exibindo os perfis atuais na listagem e permitindo marcar/desmarcar os perfis no próprio modal de criação/edição do usuário.
+
+---
+
 ## 🔐 Autenticação, Autorização e Segurança (Fase 09)
 
 A aplicação conta com autenticação por banco relacional via **Spring Security** com senhas criptografadas em **BCrypt** e controle de acesso baseado em papéis (**RBAC**) protegido no nível de servidor (Item 7 do Edital):
 
 ### Tabela de Perfis e Acessos:
-| Perfil | Permissões no Sistema | Acesso à Folha de Pagamento | Operações de Escrita (POST/PUT/DELETE) |
-| :--- | :--- | :---: | :---: |
-| **`RH` / `ADMIN`** | Acesso total e irrestrito a todos os cadastros, módulos e relatórios | ✅ Permitido | ✅ Permitido |
-| **`CONSULTA`** | Somente leitura de dados cadastrais de colaboradores e tabelas de apoio | ❌ **Bloqueado (HTTP 403)** | ❌ **Bloqueado (HTTP 403)** |
+| Perfil | Permissões no Sistema | Folha de Pagamento e Usuários/Perfis | Colaboradores | Departamentos, Cargos e Unidades |
+| :--- | :--- | :---: | :---: | :---: |
+| **`ADMIN`** *(Head de RH)* | Gestão completa e irrestrita | ✅ Acesso total | ✅ Criar, editar (inclusive salário) e excluir | ✅ CRUD completo |
+| **`FUNCIONARIO`** *(RH Operacional)* | Operação diária de DP/RH | ❌ **Bloqueado (HTTP 403)** | ✅ Criar e editar *(sem alterar salário na edição e sem `DELETE`)* | 👁️ Somente leitura |
 
-### Credenciais Pré-configuradas para Avaliação:
-* **Perfil RH (Gestão Completa + Folha)**:
-  * Usuário: `admin.rh` | Senha: `rh123`
-  * Usuário: `yago.franca` | Senha: `yago123`
-* **Perfil Consulta (Somente Leitura / Sem Folha)**:
-  * Usuário: `user.consulta` | Senha: `consulta123`
+### Credenciais Pré-configuradas:
+* **Head de RH (`ADMIN`)**: Usuário `admin` | Senha `admin`
+* **Funcionário RH (`FUNCIONARIO`)**: Usuário `funcionario` | Senha `funcionario`
 
 ---
 
