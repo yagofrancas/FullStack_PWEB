@@ -162,7 +162,7 @@
         <form th:action="@{/login}" method="post">
             <div class="form-group">
                 <label class="form-label" for="username">Usuário (Login)</label>
-                <input class="form-control" type="text" id="username" name="username" placeholder="ex: admin.rh ou user.consulta" required autofocus>
+                <input class="form-control" type="text" id="username" name="username" placeholder="ex: admin ou funcionario" required autofocus>
             </div>
 
             <div class="form-group">
@@ -177,12 +177,12 @@
         <div class="credentials-box">
             <strong>Credenciais:</strong>
             <div class="credentials-item">
-                <span>Perfil RH (Gestão Completa):</span>
-                <code>admin.rh / rh123</code>
+                <span>Head de RH (Admin):</span>
+                <code>admin / admin</code>
             </div>
             <div class="credentials-item">
-                <span>Perfil Consulta (Sem Folha):</span>
-                <code>user.consulta / consulta123</code>
+                <span>Funcionário RH (Operacional):</span>
+                <code>funcionario / funcionario</code>
             </div>
         </div>
     </div>

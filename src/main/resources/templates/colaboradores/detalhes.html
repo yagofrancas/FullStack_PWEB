@@ -49,7 +49,7 @@
                 </small>
             </div>
             <div style="display: flex; gap: 8px; align-items: center;">
-                <a sec:authorize="hasAnyRole('RH', 'ADMIN', 'GESTOR_RH')"
+                <a sec:authorize="hasAnyRole('RH', 'ADMIN', 'GESTOR_RH', 'FUNCIONARIO')"
                    th:href="@{/colaboradores/editar/{id}(id=${colaborador.id_colaborador})}"
                    class="btn btn-primary btn-sm">Editar Colaborador</a>
                 <a th:href="@{/colaboradores}" class="btn btn-secondary btn-sm">Voltar para a Lista</a>
@@ -124,6 +124,19 @@
                 <div class="detail-item">
                     <span class="detail-label">Data de Admissão</span>
                     <span class="detail-value" th:text="${colaborador.data_admissao != null ? #temporals.format(colaborador.data_admissao, 'dd/MM/yyyy') : '-'}">-</span>
+                </div>
+            </div>
+
+            <div style="margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid #e2e8f0;">
+                <span class="detail-label" style="display: block; margin-bottom: 0.6rem;">Benefícios Vinculados</span>
+                <div th:if="${#lists.isEmpty(beneficiosVinculados)}" style="color: #64748b; font-size: 0.875rem;">
+                    Nenhum benefício vinculado.
+                </div>
+                <div th:if="${!#lists.isEmpty(beneficiosVinculados)}" style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                    <span th:each="v : ${beneficiosVinculados}" class="badge badge-status-ativo"
+                          th:text="${v.beneficio != null ? v.beneficio.nome_beneficio : 'Benefício #' + v.id_beneficio}">
+                        Vale Alimentação
+                    </span>
                 </div>
             </div>
         </div>

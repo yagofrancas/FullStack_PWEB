@@ -92,18 +92,15 @@
     <div class="container">
 
         <!-- Abas de Navegação (Bootstrap 5 nav-tabs com botões diretos sem li/bolinhas) -->
-        <div id="rh-write-permission" sec:authorize="hasAnyRole('RH', 'ADMIN', 'GESTOR_RH')" style="display: none;"></div>
+        <div id="rh-admin-permission" sec:authorize="hasAnyRole('RH', 'ADMIN', 'GESTOR_RH')" style="display: none;"></div>
+        <div id="rh-write-permission" sec:authorize="hasAnyRole('RH', 'ADMIN', 'GESTOR_RH', 'FUNCIONARIO')" style="display: none;"></div>
         <div class="nav-tabs" id="tabs" role="tablist">
             <button class="nav-link active" onclick="switchTab('departamentos')">Departamentos</button>
             <button class="nav-link" onclick="switchTab('cargos')">Cargos</button>
             <button class="nav-link" onclick="switchTab('unidades')">Unidades</button>
-            <button class="nav-link" onclick="switchTab('colaboradores')">Colaboradores</button>
             <button class="nav-link" onclick="switchTab('beneficios')">Benefícios</button>
-            <button sec:authorize="hasAnyRole('RH', 'ADMIN', 'GESTOR_RH')" class="nav-link" onclick="switchTab('folhas')">Folha de Pagamento</button>
             <button sec:authorize="hasAnyRole('RH', 'ADMIN', 'GESTOR_RH')" class="nav-link" onclick="switchTab('perfis')">Perfis</button>
             <button sec:authorize="hasAnyRole('RH', 'ADMIN', 'GESTOR_RH')" class="nav-link" onclick="switchTab('usuarios')">Usuários</button>
-            <button class="nav-link" onclick="switchTab('colaborador_beneficio')">Colaborador x Benefício</button>
-            <button sec:authorize="hasAnyRole('RH', 'ADMIN', 'GESTOR_RH')" class="nav-link" onclick="switchTab('usuario_perfil')">Usuário x Perfil</button>
         </div>
 
         <!-- Card Principal (Bootstrap Card) -->
@@ -111,8 +108,9 @@
             <div class="card-header">
                 <h3 id="panel-title">Departamentos</h3>
                 <div>
-                    <button sec:authorize="hasAnyRole('RH', 'ADMIN', 'GESTOR_RH')" class="btn btn-success" id="btn-novo" onclick="abrirModalCriar()">+ Novo Registro</button>
-                    <span sec:authorize="!hasAnyRole('RH', 'ADMIN', 'GESTOR_RH')" class="badge badge-role-consulta">Perfil Consulta (Somente Leitura)</span>
+                    <button sec:authorize="hasAnyRole('RH', 'ADMIN', 'GESTOR_RH', 'FUNCIONARIO')" class="btn btn-success" id="btn-novo" onclick="abrirModalCriar()" style="display: none;">+ Novo Registro</button>
+                    <span sec:authorize="!hasAnyRole('RH', 'ADMIN', 'GESTOR_RH') and hasRole('FUNCIONARIO')" class="badge badge-role-consulta" id="badge-modo-operacional" style="display: none;">Somente Leitura nesta Aba</span>
+                    <span sec:authorize="!hasAnyRole('RH', 'ADMIN', 'GESTOR_RH', 'FUNCIONARIO')" class="badge badge-role-consulta">Perfil Consulta (Somente Leitura)</span>
                 </div>
             </div>
             <div class="card-body">
@@ -149,7 +147,32 @@
         let currentTab = 'departamentos';
         let currentItems = [];
         let auxData = {};
+        const isAdmin = document.getElementById('rh-admin-permission') !== null;
         const canWrite = document.getElementById('rh-write-permission') !== null;
+        const OPERATIONAL_WRITE_TABS = new Set(['beneficios']);
+
+        function canCreateInTab(tab) {
+            return isAdmin || (canWrite && OPERATIONAL_WRITE_TABS.has(tab));
+        }
+
+        function canEditInTab(tab) {
+            return isAdmin || (canWrite && OPERATIONAL_WRITE_TABS.has(tab));
+        }
+
+        function canDeleteInTab(tab) {
+            return isAdmin;
+        }
+
+        function atualizarControlesAba() {
+            const btnNovo = document.getElementById('btn-novo');
+            if (btnNovo) {
+                btnNovo.style.display = canCreateInTab(currentTab) ? 'inline-block' : 'none';
+            }
+            const badgeOp = document.getElementById('badge-modo-operacional');
+            if (badgeOp) {
+                badgeOp.style.display = (!isAdmin && canWrite && !canCreateInTab(currentTab)) ? 'inline-block' : 'none';
+            }
+        }
 
         const configs = {
             departamentos: {
@@ -235,12 +258,18 @@
                 idField: 'id_usuario',
                 columns: [
                     { key: 'id_usuario', label: 'ID' },
-                    { key: 'login', label: 'Login' }
+                    { key: 'login', label: 'Login' },
+                    { key: 'perfis', label: 'Perfis de Acesso', render: u => {
+                        const lista = (auxData.usuariosPerfis && auxData.usuariosPerfis[u.id_usuario]) || [];
+                        if (lista.length === 0) return '<span style="color: #64748b;">Sem perfil</span>';
+                        return lista.map(p => `<span class="badge badge-accent" style="margin-right: 4px;">${p.nome_perfil}</span>`).join('');
+                    }}
                 ],
                 fields: [
                     { name: 'id_usuario', label: 'ID', type: 'hidden' },
                     { name: 'login', label: 'Login de Acesso', type: 'text', required: true },
-                    { name: 'senha_hash', label: 'Senha / Hash', type: 'password', required: true }
+                    { name: 'senha_hash', label: 'Senha / Hash', type: 'password', required: true },
+                    { name: 'perfisIds', label: 'Perfis de Acesso (Vínculo N:N)', type: 'checkbox-group', optionsKey: 'perfis' }
                 ]
             },
             colaboradores: {
@@ -332,14 +361,15 @@
 
         async function carregarAuxiliares() {
             try {
-                const [deps, cars, unis, cols, bens, usus, pers] = await Promise.all([
+                const [deps, cars, unis, cols, bens, usus, pers, ususPers] = await Promise.all([
                     fetch('/api/departamentos').then(r => r.json()).catch(() => []),
                     fetch('/api/cargos').then(r => r.json()).catch(() => []),
                     fetch('/api/unidades').then(r => r.json()).catch(() => []),
                     fetch('/api/colaboradores').then(r => r.json()).catch(() => []),
                     fetch('/api/beneficios').then(r => r.json()).catch(() => []),
                     fetch('/api/usuarios').then(r => r.json()).catch(() => []),
-                    fetch('/api/perfis').then(r => r.json()).catch(() => [])
+                    fetch('/api/perfis').then(r => r.json()).catch(() => []),
+                    fetch('/api/usuarios-perfis').then(r => r.json()).catch(() => [])
                 ]);
 
                 auxData.departamentos = deps.map(d => ({ value: d.id_departamento, label: d.nome_departamento }));
@@ -349,6 +379,18 @@
                 auxData.beneficios = bens.map(b => ({ value: b.id_beneficio, label: b.nome_beneficio }));
                 auxData.usuarios = usus.map(u => ({ value: u.id_usuario, label: u.login }));
                 auxData.perfis = pers.map(p => ({ value: p.id_perfil, label: p.nome_perfil }));
+
+                auxData.usuariosPerfis = {};
+                if (Array.isArray(ususPers)) {
+                    ususPers.forEach(up => {
+                        const uid = up.id_usuario;
+                        if (!auxData.usuariosPerfis[uid]) auxData.usuariosPerfis[uid] = [];
+                        auxData.usuariosPerfis[uid].push({
+                            id_perfil: up.id_perfil,
+                            nome_perfil: up?.perfil?.nome_perfil || ('Perfil #' + up.id_perfil)
+                        });
+                    });
+                }
             } catch (err) {
                 console.error("Erro ao carregar dados auxiliares", err);
             }
@@ -361,6 +403,7 @@
 
             const cfg = configs[tabKey];
             document.getElementById('panel-title').innerText = cfg.title;
+            atualizarControlesAba();
             await carregarAuxiliares();
             carregarTabela();
         }
@@ -377,15 +420,16 @@
                 currentItems = Array.isArray(data) ? data : [];
 
                 if (currentItems.length === 0) {
-                    const emptyHint = canWrite
+                    const emptyHint = canCreateInTab(currentTab)
                         ? 'Nenhum registro encontrado no banco de dados. Clique em <strong>+ Novo Registro</strong> para adicionar.'
                         : 'Nenhum registro encontrado no banco de dados.';
                     container.innerHTML = `<div class="empty-state">${emptyHint}</div>`;
                     return;
                 }
 
-                // Para perfil Consulta: exibe "Ações" apenas em Colaboradores (com botão Detalhes); oculta nas demais abas (Departamentos, Cargos, Unidades, etc.)
-                const showActionsCol = canWrite || currentTab === 'colaboradores';
+                const allowEdit = canEditInTab(currentTab);
+                const allowDelete = canDeleteInTab(currentTab);
+                const showActionsCol = allowEdit || allowDelete || currentTab === 'colaboradores';
 
                 let html = '<table class="table table-hover"><thead><tr>';
                 cfg.columns.forEach(col => {
@@ -405,15 +449,17 @@
 
                     if (showActionsCol) {
                         html += '<td style="text-align: right;"><div style="display: flex; gap: 6px; justify-content: flex-end;">';
-                        if (canWrite) {
-                            if (!cfg.isComposite) {
+                        if (!cfg.isComposite) {
+                            if (allowEdit) {
                                 html += `<button class="btn btn-secondary btn-sm" onclick="abrirModalEditar(${idx})">Editar</button>`;
-                                html += `<button class="btn btn-danger btn-sm" onclick="deletarRegistro(${item[cfg.idField]})">Excluir</button>`;
-                            } else {
-                                html += `<button class="btn btn-danger btn-sm" onclick="deletarComposto(${item[cfg.idKeys[0]]}, ${item[cfg.idKeys[1]]})">Remover</button>`;
+                            } else if (currentTab === 'colaboradores') {
+                                html += `<button class="btn btn-outline-primary btn-sm" onclick="abrirModalDetalhes(${idx})">Detalhes</button>`;
                             }
-                        } else if (currentTab === 'colaboradores') {
-                            html += `<button class="btn btn-outline-primary btn-sm" onclick="abrirModalDetalhes(${idx})">Detalhes</button>`;
+                            if (allowDelete) {
+                                html += `<button class="btn btn-danger btn-sm" onclick="deletarRegistro(${item[cfg.idField]})">Excluir</button>`;
+                            }
+                        } else if (allowDelete) {
+                            html += `<button class="btn btn-danger btn-sm" onclick="deletarComposto(${item[cfg.idKeys[0]]}, ${item[cfg.idKeys[1]]})">Remover</button>`;
                         }
                         html += '</div></td>';
                     }
@@ -460,9 +506,11 @@
             const cfg = configs[currentTab];
             const body = document.getElementById('modal-body');
             body.innerHTML = '';
-            const disabledAttr = readOnly ? 'disabled' : '';
 
             cfg.fields.forEach(f => {
+                const lockSalaryOnEdit = !readOnly && !isAdmin && currentTab === 'colaboradores' && item !== null && f.name === 'salario_base';
+                const disabledAttr = (readOnly || lockSalaryOnEdit) ? 'disabled' : '';
+                const requiredAttr = (f.required && !lockSalaryOnEdit) ? 'required' : '';
                 let val = '';
                 if (item) {
                     val = item[f.name] !== undefined && item[f.name] !== null ? item[f.name] : '';
@@ -477,7 +525,7 @@
                     body.innerHTML += `<input type="hidden" name="${f.name}" value="${val}">`;
                 } else if (f.type === 'select') {
                     const opts = auxData[f.optionsKey] || [];
-                    let optHtml = `<div class="mb-3"><label class="form-label">${f.label}</label><select class="form-select" name="${f.name}" ${f.required ? 'required' : ''} ${disabledAttr}>`;
+                    let optHtml = `<div class="mb-3"><label class="form-label">${f.label}</label><select class="form-select" name="${f.name}" ${requiredAttr} ${disabledAttr}>`;
                     optHtml += '<option value="">-- Selecione uma opção --</option>';
                     opts.forEach(o => {
                         const sel = String(o.value) === String(val) ? 'selected' : '';
@@ -486,18 +534,39 @@
                     optHtml += '</select></div>';
                     body.innerHTML += optHtml;
                 } else if (f.type === 'select-custom') {
-                    let optHtml = `<div class="mb-3"><label class="form-label">${f.label}</label><select class="form-select" name="${f.name}" ${f.required ? 'required' : ''} ${disabledAttr}>`;
+                    let optHtml = `<div class="mb-3"><label class="form-label">${f.label}</label><select class="form-select" name="${f.name}" ${requiredAttr} ${disabledAttr}>`;
                     (f.options || []).forEach(opt => {
                         const sel = String(opt).toLowerCase() === String(val).toLowerCase() ? 'selected' : '';
                         optHtml += `<option value="${opt}" ${sel}>${opt}</option>`;
                     });
                     optHtml += '</select></div>';
                     body.innerHTML += optHtml;
+                } else if (f.type === 'checkbox-group') {
+                    const opts = auxData[f.optionsKey] || [];
+                    const selectedIds = (item && currentTab === 'usuarios' && auxData.usuariosPerfis && auxData.usuariosPerfis[item.id_usuario])
+                        ? auxData.usuariosPerfis[item.id_usuario].map(p => String(p.id_perfil))
+                        : [];
+                    let chkHtml = `<div class="mb-3"><label class="form-label">${f.label}</label><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.5rem;">`;
+                    opts.forEach(o => {
+                        const checked = selectedIds.includes(String(o.value)) ? 'checked' : '';
+                        chkHtml += `
+                            <label style="display: flex; align-items: center; gap: 0.45rem; padding: 0.45rem 0.65rem; border: 1px solid #d2e0d7; border-radius: 6px; background: #fafcfb; cursor: pointer; font-size: 0.85rem;">
+                                <input type="checkbox" name="${f.name}" value="${o.value}" ${checked} ${disabledAttr}>
+                                <span>${o.label}</span>
+                            </label>
+                        `;
+                    });
+                    chkHtml += '</div></div>';
+                    body.innerHTML += chkHtml;
                 } else {
+                    const lockHint = lockSalaryOnEdit
+                        ? '<small style="color: #64748b; font-size: 0.75rem;">Alteração salarial na edição é restrita ao Head de RH (Admin).</small>'
+                        : '';
                     body.innerHTML += `
                         <div class="mb-3">
                             <label class="form-label">${f.label}</label>
-                            <input class="form-control" type="${f.type}" name="${f.name}" value="${val}" ${f.step ? 'step="' + f.step + '"' : ''} ${f.required ? 'required' : ''} ${disabledAttr}>
+                            <input class="form-control" type="${f.type}" name="${f.name}" value="${val}" ${f.step ? 'step="' + f.step + '"' : ''} ${requiredAttr} ${disabledAttr}>
+                            ${lockHint}
                         </div>
                     `;
                 }
@@ -514,9 +583,12 @@
             const form = document.getElementById('modal-form');
             const formData = new FormData(form);
             const payload = {};
+            const selectedPerfis = [];
 
             formData.forEach((value, key) => {
-                if (value !== '') {
+                if (key === 'perfisIds') {
+                    selectedPerfis.push(Number(value));
+                } else if (value !== '') {
                     if (key.startsWith('id_') || key === 'salario_base' || key.startsWith('total_') || key === 'salario_liquido') {
                         payload[key] = isNaN(value) ? value : Number(value);
                     } else {
@@ -543,7 +615,26 @@
                     return;
                 }
 
+                if (currentTab === 'usuarios') {
+                    const savedUser = await res.json().catch(() => null);
+                    const userId = savedUser?.id_usuario || id;
+                    if (userId) {
+                        const atuais = ((auxData.usuariosPerfis && auxData.usuariosPerfis[userId]) || []).map(p => Number(p.id_perfil));
+                        const toRemove = atuais.filter(p => !selectedPerfis.includes(p));
+                        const toAdd = selectedPerfis.filter(p => !atuais.includes(p));
+                        await Promise.all([
+                            ...toRemove.map(pid => fetch(`/api/usuarios-perfis/${userId}/${pid}`, { method: 'DELETE' })),
+                            ...toAdd.map(pid => fetch('/api/usuarios-perfis', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ id_usuario: userId, id_perfil: pid })
+                            }))
+                        ]);
+                    }
+                }
+
                 fecharModal();
+                await carregarAuxiliares();
                 carregarTabela();
             } catch (err) {
                 alert("Erro na requisição: " + err.message);
@@ -576,6 +667,7 @@
 
         // Inicializa ao carregar a página
         document.addEventListener('DOMContentLoaded', async () => {
+            atualizarControlesAba();
             await carregarAuxiliares();
             carregarTabela();
         });

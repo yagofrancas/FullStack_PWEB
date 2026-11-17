@@ -31,11 +31,11 @@
                 </small>
             </div>
             <div>
-                <!-- Botão restrito ao perfil RH/ADMIN (Item 7 e 9 do Edital) -->
-                <a sec:authorize="hasAnyRole('RH', 'ADMIN', 'GESTOR_RH')" th:href="@{/colaboradores/novo}" class="btn btn-success">
+                <!-- Botão habilitado para ADMIN e FUNCIONARIO -->
+                <a sec:authorize="hasAnyRole('RH', 'ADMIN', 'GESTOR_RH', 'FUNCIONARIO')" th:href="@{/colaboradores/novo}" class="btn btn-success">
                     + Novo Colaborador
                 </a>
-                <span sec:authorize="!hasAnyRole('RH', 'ADMIN', 'GESTOR_RH')" class="badge badge-role-consulta">
+                <span sec:authorize="!hasAnyRole('RH', 'ADMIN', 'GESTOR_RH', 'FUNCIONARIO')" class="badge badge-role-consulta">
                     Visualização em Modo Consulta (Somente Leitura)
                 </span>
             </div>
@@ -99,15 +99,16 @@
                             </span>
                         </td>
                         <td class="text-center">
-                            <!-- Ações restritas para perfil RH / ADMIN -->
-                            <div sec:authorize="hasAnyRole('RH', 'ADMIN', 'GESTOR_RH')" style="display: flex; gap: 6px; justify-content: center;">
+                            <!-- Ações de escrita: Editar (ADMIN e FUNCIONARIO) e Excluir (apenas ADMIN) -->
+                            <div sec:authorize="hasAnyRole('RH', 'ADMIN', 'GESTOR_RH', 'FUNCIONARIO')" style="display: flex; gap: 6px; justify-content: center;">
                                 <a th:href="@{/colaboradores/editar/{id}(id=${c.id_colaborador})}" class="btn btn-outline-primary btn-sm">Editar</a>
-                                <a th:href="@{/colaboradores/excluir/{id}(id=${c.id_colaborador})}"
+                                <a sec:authorize="hasAnyRole('RH', 'ADMIN', 'GESTOR_RH')"
+                                   th:href="@{/colaboradores/excluir/{id}(id=${c.id_colaborador})}"
                                    onclick="return confirm('Deseja realmente excluir este colaborador?')"
                                    class="btn btn-danger btn-sm">Excluir</a>
                             </div>
                             <!-- Ações para usuário CONSULTA -->
-                            <div sec:authorize="!hasAnyRole('RH', 'ADMIN', 'GESTOR_RH')">
+                            <div sec:authorize="!hasAnyRole('RH', 'ADMIN', 'GESTOR_RH', 'FUNCIONARIO')">
                                 <a th:href="@{/colaboradores/detalhes/{id}(id=${c.id_colaborador})}" class="btn btn-outline-primary btn-sm">Detalhes</a>
                             </div>
                         </td>
