@@ -45,23 +45,35 @@ public class SecurityConfig {
 				.requestMatchers("/login", "/acesso-negado").permitAll()
 
 				// =====================================================================
-				// REGRAS DE AUTORIZAÇÃO POR PERFIL (Item 7 e 9 do Edital):
-				// - PERFIL RH/ADMIN: Gestão irrestrita (inclusive Folha de Pagamento)
-				// - PERFIL CONSULTA: Somente leitura de dados cadastrais
+				// REGRAS DE AUTORIZAÇÃO POR PERFIL (Head de RH vs Funcionário RH):
+				// - ADMIN (Head de RH): Gestão irrestrita (Folha, Estrutura, Usuários, Exclusões e Salários)
+				// - FUNCIONARIO (RH Operacional): Cadastro/edição de colaboradores e benefícios
 				// =====================================================================
 
-				// 1. Folha de Pagamento: Acesso estritamente restrito ao perfil RH / ADMIN
-				.requestMatchers("/folhas/**", "/api/folhas-pagamento/**").hasAnyRole("RH", "ADMIN", "GESTOR_RH")
+				// 1. Folha de Pagamento, Perfis e Usuários: Acesso estritamente restrito ao Head de RH (ADMIN)
+				.requestMatchers("/folhas/**", "/api/folhas-pagamento/**").hasAnyRole("ADMIN", "RH", "GESTOR_RH")
+				.requestMatchers("/usuarios/**", "/perfis/**", "/api/usuarios/**", "/api/perfis/**", "/api/usuarios-perfis/**").hasAnyRole("ADMIN", "RH", "GESTOR_RH")
 
-				// 2. Operações de modificação (POST, PUT, DELETE): Apenas RH / ADMIN
-				.requestMatchers(HttpMethod.POST, "/colaboradores/**", "/api/**").hasAnyRole("RH", "ADMIN", "GESTOR_RH")
-				.requestMatchers(HttpMethod.PUT, "/colaboradores/**", "/api/**").hasAnyRole("RH", "ADMIN", "GESTOR_RH")
-				.requestMatchers(HttpMethod.DELETE, "/colaboradores/**", "/api/**").hasAnyRole("RH", "ADMIN", "GESTOR_RH")
+				// 2. Estrutura Organizacional (Departamentos, Cargos, Unidades): Escrita restrita ao ADMIN
+				.requestMatchers(HttpMethod.POST, "/api/departamentos/**", "/api/cargos/**", "/api/unidades/**").hasAnyRole("ADMIN", "RH", "GESTOR_RH")
+				.requestMatchers(HttpMethod.PUT, "/api/departamentos/**", "/api/cargos/**", "/api/unidades/**").hasAnyRole("ADMIN", "RH", "GESTOR_RH")
+				.requestMatchers(HttpMethod.DELETE, "/api/departamentos/**", "/api/cargos/**", "/api/unidades/**").hasAnyRole("ADMIN", "RH", "GESTOR_RH")
 
-				// 3. Gestão de Perfis e Usuários: Apenas RH / ADMIN
-				.requestMatchers("/usuarios/**", "/perfis/**", "/api/usuarios/**", "/api/perfis/**").hasAnyRole("RH", "ADMIN", "GESTOR_RH")
+				// 3. Exclusão definitiva de colaboradores e benefícios: Apenas ADMIN
+				.requestMatchers(HttpMethod.DELETE, "/colaboradores/**", "/api/colaboradores/**", "/api/beneficios/**").hasAnyRole("ADMIN", "RH", "GESTOR_RH")
 
-				// 4. Qualquer outra requisição exige usuário autenticado
+				// 4. Operações operacionais (cadastro/edição de colaboradores e gestão de benefícios): ADMIN e FUNCIONARIO
+				.requestMatchers(HttpMethod.GET, "/colaboradores/novo", "/colaboradores/editar/**").hasAnyRole("ADMIN", "RH", "GESTOR_RH", "FUNCIONARIO")
+				.requestMatchers(HttpMethod.POST, "/colaboradores/**", "/api/colaboradores/**", "/api/beneficios/**", "/api/colaboradores-beneficios/**").hasAnyRole("ADMIN", "RH", "GESTOR_RH", "FUNCIONARIO")
+				.requestMatchers(HttpMethod.PUT, "/colaboradores/**", "/api/colaboradores/**", "/api/beneficios/**", "/api/colaboradores-beneficios/**").hasAnyRole("ADMIN", "RH", "GESTOR_RH", "FUNCIONARIO")
+				.requestMatchers(HttpMethod.DELETE, "/api/colaboradores-beneficios/**").hasAnyRole("ADMIN", "RH", "GESTOR_RH", "FUNCIONARIO")
+
+				// 5. Qualquer outra operação de modificação em API: Apenas ADMIN
+				.requestMatchers(HttpMethod.POST, "/api/**").hasAnyRole("ADMIN", "RH", "GESTOR_RH")
+				.requestMatchers(HttpMethod.PUT, "/api/**").hasAnyRole("ADMIN", "RH", "GESTOR_RH")
+				.requestMatchers(HttpMethod.DELETE, "/api/**").hasAnyRole("ADMIN", "RH", "GESTOR_RH")
+
+				// 6. Qualquer outra requisição (GET de consulta/telas) exige usuário autenticado
 				.anyRequest().authenticated()
 			)
 			.formLogin(form -> form

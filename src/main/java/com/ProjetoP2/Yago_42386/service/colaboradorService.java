@@ -6,6 +6,8 @@ import com.ProjetoP2.Yago_42386.repository.colaboradorRepository;
 import com.ProjetoP2.Yago_42386.repository.departamentoRepository;
 import com.ProjetoP2.Yago_42386.repository.unidadeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
@@ -65,7 +67,15 @@ public class colaboradorService {
 			existente.setEscolaridade(entity.getEscolaridade());
 			existente.setRegime_contratacao(entity.getRegime_contratacao());
 			existente.setModelo_trabalho(entity.getModelo_trabalho());
-			existente.setSalario_base(entity.getSalario_base());
+
+			if (usuarioPodeAlterarSalario()) {
+				existente.setSalario_base(entity.getSalario_base());
+			} else if (entity.getSalario_base() != null
+					&& existente.getSalario_base() != null
+					&& entity.getSalario_base().compareTo(existente.getSalario_base()) != 0) {
+				throw new IllegalArgumentException("Apenas o Head de RH (Admin) possui alçada para alterar o salário base na edição.");
+			}
+
 			existente.setData_nascimento(entity.getData_nascimento());
 			existente.setData_admissao(entity.getData_admissao());
 			existente.setStatus_colaborador(novoStatus);
@@ -81,6 +91,17 @@ public class colaboradorService {
 
 	public void deletar(Integer id) {
 		repository.deleteById(id);
+	}
+
+	private boolean usuarioPodeAlterarSalario() {
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		if (auth == null || !auth.isAuthenticated()) {
+			return true;
+		}
+		return auth.getAuthorities().stream()
+				.anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority())
+						|| "ROLE_RH".equals(a.getAuthority())
+						|| "ROLE_GESTOR_RH".equals(a.getAuthority()));
 	}
 
 	/**

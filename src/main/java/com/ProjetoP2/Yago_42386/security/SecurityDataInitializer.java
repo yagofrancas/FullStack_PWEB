@@ -40,18 +40,14 @@ public class SecurityDataInitializer implements CommandLineRunner {
 	@Override
 	public void run(String... args) {
 		// 1. Garantir existência dos Perfis fundamentais
-		perfil perfilRh = obterOuCriarPerfil("RH");
 		perfil perfilAdmin = obterOuCriarPerfil("ADMIN");
-		perfil perfilConsulta = obterOuCriarPerfil("CONSULTA");
+		perfil perfilFuncionario = obterOuCriarPerfil("FUNCIONARIO");
 
-		// 2. Garantir usuário com perfil RH / ADMIN (Gestão completa)
-		obterOuCriarUsuario("admin", "admin123", perfilAdmin);
-		obterOuCriarUsuario("admin.rh", "rh123", perfilRh);
-		obterOuCriarUsuario("yago.franca", "yago123", perfilRh);
+		// 2. Usuário Head de RH (Administração completa, folha, estrutura e acessos)
+		obterOuCriarUsuario("admin", "admin", perfilAdmin);
 
-		// 3. Garantir usuário com perfil CONSULTA (Apenas leitura cadastral, sem acesso à folha)
-		obterOuCriarUsuario("consulta", "consulta123", perfilConsulta);
-		obterOuCriarUsuario("user.consulta", "consulta123", perfilConsulta);
+		// 3. Usuário Funcionário de RH (Operação diária: admissão, cadastro e benefícios)
+		obterOuCriarUsuario("funcionario", "funcionario", perfilFuncionario);
 	}
 
 	private perfil obterOuCriarPerfil(String nome) {
@@ -70,8 +66,10 @@ public class SecurityDataInitializer implements CommandLineRunner {
 		usuario u;
 		if (existente.isPresent()) {
 			u = existente.get();
-			// Se a senha não estiver no padrão BCrypt ($2a$), re-codifica
-			if (u.getSenha_hash() == null || !u.getSenha_hash().startsWith("$2a$")) {
+			// Garante hash BCrypt válido e compatível com a credencial padrão configurada
+			if (u.getSenha_hash() == null
+					|| !u.getSenha_hash().startsWith("$2a$")
+					|| !passwordEncoder.matches(plainPassword, u.getSenha_hash())) {
 				u.setSenha_hash(passwordEncoder.encode(plainPassword));
 				u = usuarioRepo.save(u);
 			}
